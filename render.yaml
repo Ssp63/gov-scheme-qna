@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: govt-scheme-backend
+    env: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
