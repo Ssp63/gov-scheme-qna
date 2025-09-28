@@ -1,0 +1,267 @@
+/* Search Box Styles */
+.search-container {
+  max-width: 800px;
+  margin: 0 auto 40px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
+  border: 3px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(145deg, rgba(251, 191, 36, 0.05) 0%, rgba(217, 119, 6, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.search-box.focused,
+.search-box:focus-within {
+  border-color: #d97706;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(217, 119, 6, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-3px);
+}
+
+.search-box.focused::before,
+.search-box:focus-within::before {
+  opacity: 1;
+}
+
+/* Search icon removed - no longer needed */
+
+.clear-button {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 3;
+}
+
+.clear-button:hover {
+  background: rgba(107, 114, 128, 0.1);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.clear-icon {
+  width: 18px;
+  height: 18px;
+  color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+.clear-button:hover .clear-icon {
+  color: #374151;
+}
+
+.search-input {
+  width: 100%;
+  padding: 20px 50px 20px 24px;
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  border-radius: 20px;
+  outline: none;
+  font-family: 'Arial', sans-serif;
+  color: #1f2937;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+  line-height: 1.5;
+}
+
+.search-input::placeholder {
+  color: #6b7280;
+  font-weight: 400;
+  transition: color 0.3s ease;
+}
+
+.search-input:focus::placeholder {
+  color: #9ca3af;
+}
+
+/* Search Suggestions */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
+  color: #d97706;
+}
+
+/* Search icon removed from suggestions */
+
+.suggestion-item span {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .search-container {
+    max-width: 100%;
+    margin: 0 auto 50px auto;
+    padding: 0 20px;
+  }
+  
+  .search-box {
+    margin: 0;
+  }
+  
+  .search-input {
+    font-size: 1rem;
+    padding: 16px 45px 16px 20px;
+  }
+  
+  .clear-button {
+    right: 16px;
+    padding: 4px;
+  }
+  
+  .clear-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .suggestion-item {
+    padding: 14px 20px;
+  }
+  
+  .suggestion-item span {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-container {
+    margin: 0 auto 40px auto;
+    padding: 0 16px;
+  }
+  
+  .search-box {
+    margin: 0;
+    border-radius: 16px;
+  }
+  
+  .search-input {
+    font-size: 0.95rem;
+    padding: 14px 40px 14px 18px;
+  }
+  
+  .clear-button {
+    right: 12px;
+    padding: 3px;
+  }
+  
+  .clear-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .suggestion-item {
+    padding: 12px 16px;
+  }
+  
+  .suggestion-item span {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .search-container {
+    padding: 0 12px;
+  }
+  
+  .search-box {
+    margin: 0;
+  }
+  
+  .search-input {
+    padding: 12px 35px 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .clear-button {
+    right: 10px;
+    padding: 2px;
+  }
+  
+  .clear-icon {
+    width: 12px;
+    height: 12px;
+  }
+}

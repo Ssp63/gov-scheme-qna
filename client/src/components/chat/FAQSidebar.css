@@ -1,0 +1,272 @@
+/* FAQ Sidebar Styles - Modern Design */
+.faqs-sidebar {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow-y: auto;
+  min-height: auto; /* Changed from fixed height to auto */
+  max-height: calc(100vh - 200px);
+  border: 1px solid #e5e7eb;
+  /* Remove bottom padding to eliminate empty space */
+  padding-bottom: 24px;
+  /* Custom scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Webkit scrollbar styling */
+.faqs-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.faqs-sidebar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.faqs-sidebar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.faqs-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.faqs-sidebar h3 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 6px;
+  letter-spacing: -0.025em;
+}
+
+.faqs-sidebar p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* Remove any bottom margin to eliminate empty space */
+  margin-bottom: 0;
+}
+
+.faq-button {
+  text-align: left;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.5;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.faq-button:hover {
+  background: #f0f9ff;
+  border-color: #3b82f6;
+  color: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.faq-button:active {
+  transform: translateY(0);
+}
+
+/* New styles for scheme list and divider */
+.divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 20px 0;
+}
+
+.faqs-sidebar h4 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+  letter-spacing: -0.025em;
+}
+
+.scheme-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.scheme-button {
+  text-align: left;
+  padding: 12px 14px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 10px;
+  color: #92400e;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.scheme-button:hover {
+  background: #fde68a;
+  border-color: #d97706;
+  color: #78350f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.scheme-button:active {
+  transform: translateY(0);
+}
+
+.scheme-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.scheme-category {
+  font-size: 0.75rem;
+  color: #a16207;
+  font-weight: 500;
+}
+
+/* Loading state */
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .faqs-sidebar {
+    order: 2;
+    max-height: 200px; /* Set scrollable height for mobile */
+    min-height: auto;
+    padding: 16px;
+    padding-bottom: 16px;
+    border-radius: 12px;
+    margin: 0;
+    overflow-y: auto; /* Enable scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+  
+  .faqs-sidebar h3 {
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  
+  .faqs-sidebar p {
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+  }
+  
+  .faq-list {
+    gap: 6px;
+  }
+  
+  .faq-button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .faqs-sidebar {
+    margin: 0;
+    padding: 12px;
+    padding-bottom: 12px;
+    border-radius: 8px;
+    max-height: 180px; /* Set scrollable height for small mobile */
+    min-height: auto;
+    overflow-y: auto; /* Enable scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+  
+  .faqs-sidebar h3 {
+    font-size: 0.9rem;
+    margin-bottom: 3px;
+  }
+  
+  .faqs-sidebar p {
+    font-size: 0.75rem;
+    margin-bottom: 10px;
+  }
+  
+  .faq-list {
+    gap: 4px;
+  }
+  
+  .faq-button {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .faqs-sidebar {
+    margin: 0;
+    padding: 10px;
+    padding-bottom: 10px;
+    max-height: 160px; /* Set scrollable height for very small mobile */
+    min-height: auto;
+    overflow-y: auto; /* Enable scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+  
+  .faqs-sidebar h3 {
+    font-size: 0.85rem;
+  }
+  
+  .faqs-sidebar p {
+    font-size: 0.7rem;
+    margin-bottom: 8px;
+  }
+  
+  .faq-list {
+    gap: 3px;
+  }
+  
+  .faq-button {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+  }
+}

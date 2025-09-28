@@ -1,0 +1,450 @@
+/* Chat Messages Styles - Modern Design */
+.messages-container {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  min-height: 400px;
+  max-height: calc(100vh - 300px);
+  background: #ffffff;
+  /* Mobile optimizations */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Messages */
+.message {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.message.user {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.message.bot .message-avatar {
+  background: transparent;
+  color: white;
+  box-shadow: none;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bot logo styling */
+.bot-logo {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  animation: botPulse 2s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.bot-logo:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+}
+
+@keyframes botPulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+/* Removed complex background effects for cleaner bot logo */
+
+/* Removed shimmer animation - no longer needed */
+
+/* Bot icon animations */
+.bot-icon {
+  animation: botFloat 3s ease-in-out infinite;
+}
+
+@keyframes botFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(1deg); }
+}
+
+.bot-eye {
+  animation: eyeBlink 4s ease-in-out infinite;
+}
+
+@keyframes eyeBlink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+.bot-pupil {
+  animation: pupilMove 6s ease-in-out infinite;
+}
+
+@keyframes pupilMove {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-0.2px); }
+  75% { transform: translateX(0.2px); }
+}
+
+.message.user .message-avatar {
+  background: #10b981;
+  color: white;
+}
+
+.message-content {
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+}
+
+.message.user .message-content {
+  align-items: flex-end;
+}
+
+.message-text {
+  background: #f8fafc;
+  padding: 14px 18px;
+  border-radius: 18px;
+  color: #1f2937;
+  line-height: 1.6;
+  word-wrap: break-word;
+  font-size: 15px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.message-text strong {
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.message-text br {
+  margin: 4px 0;
+}
+
+.message.bot .message-text {
+  background: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  color: #0c4a6e;
+}
+
+.message.user .message-text {
+  background: #f0fdf4;
+  border: 1px solid #dcfce7;
+  color: #166534;
+}
+
+.message-references {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.message-references p {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+
+.reference-link {
+  display: block;
+  color: #1e40af;
+  text-decoration: none;
+  margin-bottom: 2px;
+  font-size: 0.8rem;
+}
+
+.reference-link:hover {
+  text-decoration: underline;
+}
+
+/* Message Sources */
+.message-sources {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.message-sources p {
+  font-weight: 600;
+  color: #166534;
+  margin-bottom: 4px;
+}
+
+.source-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  font-size: 0.8rem;
+}
+
+.source-item.clickable-source {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.source-item.clickable-source:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.source-type {
+  font-size: 0.9rem;
+}
+
+.download-icon {
+  margin-left: auto;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.source-item.clickable-source:hover .download-icon {
+  opacity: 1;
+}
+
+.source-info {
+  color: #059669;
+  flex: 1;
+}
+
+.relevance-score {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-left: 4px;
+}
+
+/* Message Action Button */
+.message-action {
+  margin-top: 12px;
+  padding: 8px 0;
+}
+
+.action-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-button:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+.action-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.message-time {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.message.user .message-time {
+  text-align: right;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+}
+
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  background: #3b82f6;
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .messages-container {
+    max-height: 500px; /* Increased height for mobile */
+    min-height: 350px; /* Ensure minimum height */
+    padding: 16px;
+    padding-bottom: 20px; /* Extra space for input */
+  }
+  
+  .message-content {
+    max-width: 85%;
+  }
+  
+  .message-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .bot-logo {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .message-text {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-radius: 16px;
+  }
+  
+  .message-time {
+    font-size: 11px;
+  }
+
+  .action-button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .messages-container {
+    padding: 12px;
+    max-height: 400px; /* Increased height for small mobile */
+    min-height: 300px; /* Ensure minimum height */
+    padding-bottom: 16px;
+  }
+  
+  .message-content {
+    max-width: 90%;
+  }
+  
+  .message-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .bot-logo {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  
+  .message-text {
+    padding: 10px 14px;
+    font-size: 14px;
+    border-radius: 14px;
+  }
+  
+  .message-references {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .reference-link {
+    font-size: 11px;
+  }
+  
+  .message-time {
+    font-size: 10px;
+  }
+
+  .action-button {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .messages-container {
+    padding: 10px;
+    max-height: 350px; /* Increased height for very small mobile */
+    min-height: 250px; /* Ensure minimum height */
+    padding-bottom: 14px;
+  }
+  
+  .message-text {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .message-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .bot-logo {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+  .messages-container {
+    max-height: calc(100vh - 120px);
+    padding: 8px;
+  }
+  
+  .message-text {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .message-avatar {
+    width: 24px;
+    height: 24px;
+  }
+}

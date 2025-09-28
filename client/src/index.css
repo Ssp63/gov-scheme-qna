@@ -1,0 +1,12 @@
+/* Import our global styles */
+@import './styles/globals.css';
+
+/* Any additional global overrides can go here */
+
+* {
+  box-sizing: border-box;
+}
+
+.App {
+  min-height: 100vh;
+}

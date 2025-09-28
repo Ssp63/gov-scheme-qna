@@ -1,0 +1,24 @@
+/* App-specific styles */
+.App {
+  min-height: 100vh;
+  background: var(--gov-secondary-50);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Override any default styles if needed */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure proper layout with footer */
+.App > div {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main content area should grow to push footer down */
+.App .main-content {
+  flex: 1;
+}

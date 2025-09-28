@@ -1,0 +1,122 @@
+/* Chat Interface Styles - Modern Responsive Design */
+
+.chat-interface {
+  min-height: 100vh;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  /* Mobile optimizations */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Chat Container */
+.chat-container {
+  flex: 1;
+  padding: 20px 0;
+}
+
+/* Mobile spacing improvements */
+@media (max-width: 768px) {
+  .chat-container {
+    padding: 12px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-container {
+    padding: 8px 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .chat-container {
+    padding: 6px 0;
+  }
+}
+
+.chat-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  min-height: calc(100vh - 200px);
+  align-items: start;
+}
+
+/* Chat Area */
+.chat-area {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  margin-top: 8px; /* Add some space from header */
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .chat-layout {
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+  }
+  
+  .chat-area {
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-container {
+    padding: 6px;
+  }
+  
+  .chat-layout {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    min-height: auto;
+  }
+  
+  .chat-area {
+    order: 1;
+    min-height: 450px; /* Increased height for better chat visibility */
+    max-height: 70vh; /* Increased maximum height */
+    border-radius: 12px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-container {
+    padding: 4px;
+  }
+  
+  .chat-layout {
+    gap: 4px;
+  }
+  
+  .chat-area {
+    min-height: 400px; /* Increased height for small screens */
+    max-height: 65vh; /* Increased maximum height */
+    border-radius: 8px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .chat-container {
+    padding: 3px;
+  }
+  
+  .chat-layout {
+    gap: 3px;
+  }
+  
+  .chat-area {
+    min-height: 350px; /* Increased height for very small screens */
+    max-height: 60vh; /* Increased maximum height */
+    border-radius: 6px;
+    margin: 0;
+  }
+}

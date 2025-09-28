@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="shortcut icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="msapplication-TileColor" content="#0f172a" />
+    <meta name="msapplication-TileImage" content="%PUBLIC_URL%/logo192.png" />
+    <meta
+      name="description"
+      content="LokMitra - Government Scheme Q&A Platform for Citizens"
+    />
+    <meta name="keywords" content="government, schemes, Q&A, LokMitra, citizen services, India" />
+    <meta name="author" content="LokMitra Team" />
+    <title>LokMitra - Govt Scheme Q&A</title>
+    
+    <!-- Google Translate Script - Optimized for React SPA -->
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+          pageLanguage: 'en',
+          includedLanguages: 'en,mr',
+          layout: google.translate.TranslateElement.InlineLayout.HORIZONTAL,
+          autoDisplay: false,
+          multilanguagePage: true
+        }, 'google_translate_element');
+        
+        // Hide Google Translate elements immediately
+        const hideTranslateElements = () => {
+          const elements = [
+            '.goog-te-banner-frame',
+            '.goog-te-gadget',
+            '.goog-te-ftab',
+            '.skiptranslate'
+          ];
+          elements.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) element.style.display = 'none';
+          });
+        };
+        
+        // Hide immediately and after a delay
+        hideTranslateElements();
+        setTimeout(hideTranslateElements, 100);
+        setTimeout(hideTranslateElements, 500);
+      }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    
+    <!-- Hide Google Translate Elements -->
+    <style>
+      .goog-te-banner-frame,
+      .goog-te-gadget,
+      .goog-te-combo,
+      .goog-te-ftab,
+      .goog-te-menu-value,
+      .goog-te-menu-value span,
+      .goog-te-gadget .goog-te-combo,
+      .skiptranslate {
+        display: none !important;
+      }
+      .goog-te-menu-value:before {
+        content: '';
+      }
+      body {
+        top: 0px !important;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

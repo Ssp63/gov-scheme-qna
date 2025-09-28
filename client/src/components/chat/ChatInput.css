@@ -1,0 +1,272 @@
+/* Chat Input Styles - Modern Design */
+.chat-input-area {
+  border-top: 1px solid #e5e7eb;
+  padding: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  position: relative;
+}
+
+.chat-input-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #667eea, transparent);
+  opacity: 0.3;
+}
+
+.input-container {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center; /* Center alignment for proper button positioning */
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.input-wrapper:focus-within {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.message-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  resize: none;
+  min-height: 24px; /* Increased to better match button height */
+  max-height: 120px;
+  outline: none;
+  color: #1f2937;
+  position: relative;
+  z-index: 1;
+  transition: height 0.2s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  overflow-y: auto;
+  /* Mobile optimizations */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+.message-input:focus {
+  outline: none;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+  color: #0f172a;
+}
+
+.message-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 13px; /* Smaller placeholder text */
+  transition: color 0.2s ease;
+}
+
+.message-input:focus::placeholder {
+  color: #64748b;
+}
+
+.send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-left: 8px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+  /* Mobile optimizations */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  min-width: 40px;
+  min-height: 40px;
+  /* Ensure proper alignment */
+  align-self: center;
+}
+
+.send-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.send-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.send-button:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.send-button:active:not(:disabled) {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.send-button:disabled {
+  background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+  color: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .chat-input-area {
+    padding: 8px;
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    z-index: 10;
+  }
+  
+  .input-wrapper {
+    padding: 3px;
+    border-radius: 16px;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+  }
+  
+  .message-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 6px 10px;
+    min-height: 16px;
+    max-height: 60px;
+    flex: 1;
+  }
+  
+  .message-input::placeholder {
+    font-size: 12px; /* Smaller placeholder on mobile */
+  }
+  
+  .send-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    margin-left: 3px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-input-area {
+    padding: 6px;
+  }
+  
+  .input-wrapper {
+    padding: 2px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .message-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 5px 8px;
+    min-height: 14px;
+    max-height: 50px;
+    flex: 1;
+  }
+  
+  .message-input::placeholder {
+    font-size: 11px; /* Even smaller placeholder on small mobile */
+  }
+  
+  .send-button {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    margin-left: 2px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .chat-input-area {
+    padding: 4px;
+  }
+  
+  .input-wrapper {
+    padding: 1px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .message-input {
+    font-size: 16px;
+    padding: 4px 6px;
+    min-height: 12px;
+    max-height: 40px;
+    flex: 1;
+  }
+  
+  .message-input::placeholder {
+    font-size: 10px; /* Smallest placeholder on very small mobile */
+  }
+  
+  .send-button {
+    width: 26px;
+    height: 26px;
+    border-radius: 13px;
+    margin-left: 1px;
+    flex-shrink: 0;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+  .chat-input-area {
+    padding: 6px;
+  }
+  
+  .message-input {
+    max-height: 60px;
+    font-size: 14px;
+  }
+  
+  .send-button {
+    width: 28px;
+    height: 28px;
+  }
+}

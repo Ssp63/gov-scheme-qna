@@ -1,0 +1,28 @@
+{
+  "name": "govt-scheme-qna",
+  "version": "1.0.0",
+  "description": "Government Scheme Q&A Web Application",
+  "main": "server/server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "heroku-postbuild": "cd client && npm install && npm run build"
+  },
+  "keywords": [
+    "government",
+    "schemes",
+    "chatbot",
+    "react",
+    "node",
+    "mongodb",
+    "ai"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

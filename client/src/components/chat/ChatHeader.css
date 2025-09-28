@@ -1,0 +1,123 @@
+/* Chat Header Styles */
+.chat-header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.chat-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scheme-info h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.scheme-info p {
+  color: #6b7280;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+.chat-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #10b981;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.online {
+  background: #10b981;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .chat-header {
+    padding: 8px 0;
+  }
+  
+  .chat-header-content {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+  
+  .scheme-info h1 {
+    font-size: 0.8rem; /* Reduced from 0.95rem (12.8px) */
+    margin-bottom: 1px;
+    line-height: 1.1;
+  }
+  
+  .scheme-info p {
+    font-size: 0.75rem;
+    margin-bottom: 0;
+  }
+  
+  .chat-status {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-header {
+    padding: 6px 0;
+  }
+  
+  .scheme-info h1 {
+    font-size: 0.7rem; /* Reduced from 0.85rem (11.2px) */
+    margin-bottom: 0;
+    line-height: 1.1;
+  }
+  
+  .scheme-info p {
+    font-size: 0.7rem;
+    margin-bottom: 0;
+  }
+  
+  .chat-status {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .chat-header {
+    padding: 4px 0;
+  }
+  
+  .scheme-info h1 {
+    font-size: 0.65rem; /* Reduced from 0.8rem (10.4px) */
+    margin-bottom: 0;
+    line-height: 1.1;
+  }
+  
+  .scheme-info p {
+    font-size: 0.65rem;
+    margin-bottom: 0;
+  }
+  
+  .chat-status {
+    font-size: 0.65rem;
+  }
+}
