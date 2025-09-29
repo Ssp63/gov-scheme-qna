@@ -101,8 +101,7 @@ body {
   font-family: var(--font-primary);
   line-height: 1.7;
   color: var(--gov-secondary-800);
-  background: linear-gradient(135deg, #ffffff 0%, #fefce8 25%, #ffffff 50%, #fefce8 75%, #ffffff 100%);
-  background-attachment: fixed;
+  background: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;

@@ -104,22 +104,37 @@
   font-family: 'Times New Roman', serif;
   font-size: clamp(2.8rem, 5vw, 4.5rem);
   font-weight: 700;
-  color: #1f2937;
+  color: #efcebd !important;
   margin-bottom: 24px;
   line-height: 1.1;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+h1.hero-title .hero-highlight {
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+.hero-title .hero-highlight {
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
 .hero-highlight {
-  color: #d88c35;
-  text-shadow: 0 2px 4px rgba(217, 119, 6, 0.3);
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+span.hero-highlight {
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
 }
 
 .hero-description {
   font-size: clamp(1.1rem, 2.5vw, 1.3rem);
   color: #374151;
   max-width: 700px;
-  margin: 0 auto 60px;
+  margin: 0 auto 100px;
   line-height: 1.7;
   font-weight: 500;
 }
