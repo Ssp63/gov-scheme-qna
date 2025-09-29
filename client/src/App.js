@@ -12,6 +12,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import UserProfile from './pages/admin/UserProfile';
 import Analytics from './pages/admin/Analytics';
+import AIServices from './pages/admin/AIServices';
 import ChatInterface from './pages/citizen/ChatInterface';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Navbar from './components/common/Navbar';
@@ -116,6 +117,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <Analytics />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/ai-services" 
+              element={
+                <ProtectedRoute adminOnly>
+                  <AIServices />
                 </ProtectedRoute>
               } 
             />

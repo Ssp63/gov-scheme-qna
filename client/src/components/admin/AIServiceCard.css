@@ -1,0 +1,351 @@
+/* AI Service Card Styles - Government Theme */
+.ai-service-card {
+  background: linear-gradient(135deg, #fefce8 0%, #f8fafc 100%);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(217, 119, 6, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  animation: slideInUp 0.6s ease-out var(--animation-delay) both;
+  cursor: pointer;
+}
+
+.ai-service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.05) 0%, rgba(180, 83, 9, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.ai-service-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(217, 119, 6, 0.2);
+  border-color: #d97706;
+}
+
+.ai-service-card:hover::before {
+  opacity: 1;
+}
+
+/* Card Header */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 12px;
+  position: relative;
+  /* Indian Gold Shine Gradient - Same as Scheme Cards */
+  background: linear-gradient(65deg,
+    #DDB849,   /* Indian Gold */
+    #FFFACD,   /* Light gold highlight */
+    #ddb849a8,
+    #af960760    /* Deep gold shadow */
+  );
+  background-size: 300% 300%;
+  animation: gradientShift 8s linear infinite;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid #B8860B;
+  box-shadow: 0 2px 8px rgba(221, 184, 73, 0.3);
+}
+
+.service-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  border: 2px solid rgba(217, 119, 6, 0.2);
+}
+
+.ai-service-card:hover .service-icon {
+  transform: rotate(5deg) scale(1.1);
+  box-shadow: 0 8px 25px rgba(217, 119, 6, 0.4);
+  border-color: #d97706;
+}
+
+.service-icon svg {
+  width: 24px;
+  height: 24px;
+  color: #1f2937;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+}
+
+.service-icon img {
+  width: 24px;
+  height: 24px;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+}
+
+.ai-service-card:hover .service-icon svg,
+.ai-service-card:hover .service-icon img {
+  transform: scale(1.1);
+}
+
+/* Status Indicator */
+.status-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.status-dot.active {
+  background: #10b981;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-dot.active::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: ripple 2s ease-in-out infinite;
+}
+
+.status-dot.inactive {
+  background: #ef4444;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-text {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #1f2937;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Card Content */
+.card-content {
+  margin-bottom: 20px;
+}
+
+.service-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.ai-service-card:hover .service-name {
+  transform: translateX(4px);
+  color: #d97706;
+}
+
+.service-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+.ai-service-card:hover .service-description {
+  color: #1f2937;
+}
+
+/* Card Footer */
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.service-badge {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border-radius: 20px;
+  padding: 6px 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+}
+
+.ai-service-card:hover .service-badge {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+}
+
+.badge-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ai-service-card {
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  
+  .card-header {
+    gap: 8px;
+  }
+  
+  .service-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .service-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .service-icon img {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .status-dot {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .status-dot.active::before {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .status-text {
+    font-size: 10px;
+  }
+  
+  .service-name {
+    font-size: 18px;
+  }
+  
+  .service-description {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-service-card {
+    padding: 16px;
+  }
+  
+  .card-header {
+    margin-bottom: 16px;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  .status-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  
+  .status-dot {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .status-dot.active::before {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .service-name {
+    font-size: 16px;
+  }
+  
+  .service-description {
+    font-size: 12px;
+  }
+  
+  .status-text {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+}

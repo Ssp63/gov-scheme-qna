@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import StatsCard from '../../components/analytics/StatsCard';
 import ChartsSection from '../../components/analytics/ChartsSection';
@@ -15,6 +16,7 @@ import {
 } from 'react-icons/fa';
 
 const Analytics = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -97,15 +99,6 @@ const Analytics = () => {
     return num.toString();
   };
 
-  // Calculate percentage change (mock data for now)
-  const getTrend = (current, previous = 0) => {
-    if (previous === 0) return { type: 'neutral', value: '0%' };
-    const change = ((current - previous) / previous) * 100;
-    return {
-      type: change > 0 ? 'up' : change < 0 ? 'down' : 'neutral',
-      value: `${change > 0 ? '+' : ''}${change.toFixed(1)}%`
-    };
-  };
 
   if (loading || !isMounted) {
     return (
@@ -133,6 +126,12 @@ const Analytics = () => {
         {/* Header */}
         <div className="analytics-header">
           <div className="header-content">
+            <button 
+              className="back-button"
+              onClick={() => navigate('/admin/dashboard')}
+            >
+              ← Back to Dashboard
+            </button>
             <h1>Analytics Dashboard</h1>
             <p>Track user engagement and system performance</p>
           </div>
