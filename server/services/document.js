@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
-const { Document } = require('../models');
+// Document model removed - using simplified processing
 const { deleteFile } = require('../middleware/upload');
 
 // Text extraction from text file (for testing)
@@ -21,10 +21,19 @@ const extractTextFromTXT = async (filePath) => {
   }
 };
 
-// Text extraction from PDF
-const extractTextFromPDF = async (filePath) => {
+// Text extraction from PDF (supports both file path and buffer)
+const extractTextFromPDF = async (input) => {
   try {
-    const dataBuffer = fs.readFileSync(filePath);
+    let dataBuffer;
+    
+    // Check if input is a buffer or file path
+    if (Buffer.isBuffer(input)) {
+      dataBuffer = input;
+    } else {
+      // Assume it's a file path
+      dataBuffer = fs.readFileSync(input);
+    }
+    
     const data = await pdfParse(dataBuffer);
     
     return {
@@ -171,91 +180,69 @@ const calculateImportance = (text) => {
   return Math.min(score, 1.0);
 };
 
-// Main document processing function
+// Main document processing function - simplified version
 const processDocument = async (schemeId, fileInfo, uploadedBy) => {
   try {
     console.log(`Processing document: ${fileInfo.originalName}`);
     
-    // Create document record
-    const document = new Document({
-      schemeId,
-      originalFileName: fileInfo.originalName,
-      fileType: fileInfo.mimetype === 'application/pdf' ? 'pdf' : 
-                fileInfo.mimetype === 'text/plain' ? 'txt' : 'docx',
-      fileSize: fileInfo.size,
-      filePath: fileInfo.path,
-      extractedText: '',
-      chunks: [],
-      processingStatus: 'extracting',
-      uploadedBy
-    });
-    
-    document.addProcessingLog('started', 'success', 'Document processing started');
-    await document.save();
-    
     // Extract text based on file type
     let extractedData;
+    const inputData = fileInfo.buffer || fileInfo.path; // Use buffer if available, otherwise path
+    
     if (fileInfo.mimetype === 'application/pdf') {
-      extractedData = await extractTextFromPDF(fileInfo.path);
+      extractedData = await extractTextFromPDF(inputData);
     } else if (fileInfo.mimetype === 'text/plain') {
-      extractedData = await extractTextFromTXT(fileInfo.path);
+      // Text files with buffers need special handling
+      if (fileInfo.buffer) {
+        extractedData = {
+          text: fileInfo.buffer.toString('utf8'),
+          pages: 1,
+          info: { title: 'Text Document' }
+        };
+      } else {
+        extractedData = await extractTextFromTXT(inputData);
+      }
     } else {
-      extractedData = await extractTextFromDOCX(fileInfo.path);
+      // DOCX with buffer handling is more complex, for now keep path-based
+      if (fileInfo.buffer) {
+        throw new Error('DOCX buffer processing not implemented yet. Please use file upload.');
+      } else {
+        extractedData = await extractTextFromDOCX(inputData);
+      }
     }
     
-    // Update document with extracted text
-    document.extractedText = extractedData.text;
-    document.processingStatus = 'chunking';
-    document.addProcessingLog('extraction', 'success', `Extracted ${extractedData.text.length} characters`);
-    await document.save();
+    console.log(`Text extraction completed: ${extractedData.text.length} characters`);
     
     // Create text chunks
     const chunks = chunkText(extractedData.text);
     
-    // For now, we'll store chunks without embeddings
-    // Embeddings will be added when we integrate Google Gemini API
-    document.chunks = chunks.map(chunk => ({
-      ...chunk,
-      embedding: [] // Will be populated later with Gemini embeddings
-    }));
-    
-    document.processingStatus = 'completed';
-    document.addProcessingLog('chunking', 'success', `Created ${chunks.length} text chunks`);
-    await document.save();
-    
     console.log(`Document processing completed: ${chunks.length} chunks created`);
     
-    // Clean up uploaded file (optional - you might want to keep it)
-    // deleteFile(fileInfo.path);
-    
-    return document;
+    // Return simplified result
+    return {
+      success: true,
+      chunks: chunks.length,
+      textLength: extractedData.text.length
+    };
     
   } catch (error) {
     console.error('Document processing error:', error);
     
-    // Update document status to failed
-    if (document && document._id) {
-      document.processingStatus = 'failed';
-      document.addProcessingLog('processing', 'error', error.message);
-      await document.save();
+    // Clean up uploaded file on error (only for local files)
+    if (fileInfo.path && !fileInfo.buffer) {
+      deleteFile(fileInfo.path);
     }
-    
-    // Clean up uploaded file on error
-    deleteFile(fileInfo.path);
+    // Note: Cloudinary files (with buffer) don't need local cleanup
     
     throw error;
   }
 };
 
-// Get documents for a scheme
+// Get documents for a scheme - simplified version
 const getSchemeDocuments = async (schemeId) => {
   try {
-    const documents = await Document.find({ 
-      schemeId, 
-      processingStatus: 'completed' 
-    }).select('originalFileName fileType fileSize totalChunks createdAt');
-    
-    return documents;
+    // Simplified version - no document storage
+    return [];
   } catch (error) {
     console.error('Get scheme documents error:', error);
     throw error;

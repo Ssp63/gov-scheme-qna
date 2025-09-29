@@ -11,6 +11,7 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import UserProfile from './pages/admin/UserProfile';
+import Analytics from './pages/admin/Analytics';
 import ChatInterface from './pages/citizen/ChatInterface';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Navbar from './components/common/Navbar';
@@ -107,6 +108,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly>
                   <UserProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/analytics" 
+              element={
+                <ProtectedRoute adminOnly>
+                  <Analytics />
                 </ProtectedRoute>
               } 
             />

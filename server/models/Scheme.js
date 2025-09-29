@@ -29,9 +29,12 @@ const schemeSchema = new mongoose.Schema({
     ],
     default: 'Other'
   },
-  // PDF file information
+  // PDF file information (simplified for RAG compatibility)
   pdfFile: {
-    originalName: {
+    url: {
+      type: String
+    },
+    publicId: {
       type: String
     },
     filename: {
@@ -39,13 +42,6 @@ const schemeSchema = new mongoose.Schema({
     },
     path: {
       type: String
-    },
-    size: {
-      type: Number
-    },
-    uploadDate: {
-      type: Date,
-      default: Date.now
     }
   },
   isActive: {
@@ -140,18 +136,16 @@ schemeSchema.statics.permanentDelete = async function(schemeId) {
     const deletedChunks = await DocumentChunk.deleteMany({ schemeId: schemeId });
     console.log(`🗑️ Deleted ${deletedChunks.deletedCount} chunks for scheme: ${schemeId}`);
     
-    // Delete PDF file if it exists
+    // Delete PDF file from cloud storage if it exists
     let deletedFile = null;
-    if (scheme.pdfFile && scheme.pdfFile.filename) {
+    if (scheme.pdfFile && scheme.pdfFile.publicId) {
       try {
-        const fs = require('fs').promises;
-        const path = require('path');
-        const filePath = path.join(__dirname, '..', 'uploads', 'schemes', scheme.pdfFile.filename);
-        await fs.unlink(filePath);
-        deletedFile = scheme.pdfFile.filename;
-        console.log(`🗑️ Deleted PDF file: ${deletedFile}`);
+        const { deleteFile } = require('../services/cloudStorage');
+        await deleteFile(scheme.pdfFile.publicId);
+        deletedFile = scheme.pdfFile.publicId;
+        console.log(`🗑️ Deleted PDF file from cloud storage: ${deletedFile}`);
       } catch (fileError) {
-        console.warn(`⚠️ Failed to delete PDF file ${scheme.pdfFile.filename}:`, fileError.message);
+        console.warn(`⚠️ Failed to delete PDF file from cloud storage ${scheme.pdfFile.publicId}:`, fileError.message);
       }
     }
     
@@ -180,20 +174,18 @@ schemeSchema.statics.cleanupPDFFile = async function(schemeId) {
       throw new Error('Scheme not found');
     }
     
-    if (!scheme.pdfFile || !scheme.pdfFile.filename) {
+    if (!scheme.pdfFile || !scheme.pdfFile.publicId) {
       return {
         success: true,
         message: 'No PDF file associated with this scheme'
       };
     }
     
-    const fs = require('fs').promises;
-    const path = require('path');
-    const filePath = path.join(__dirname, '..', 'uploads', 'schemes', scheme.pdfFile.filename);
+    const { deleteFile } = require('../services/cloudStorage');
     
     try {
-      await fs.unlink(filePath);
-      console.log(`🗑️ Deleted PDF file: ${scheme.pdfFile.filename}`);
+      await deleteFile(scheme.pdfFile.publicId);
+      console.log(`🗑️ Deleted PDF file from cloud storage: ${scheme.pdfFile.publicId}`);
       
       // Clear PDF file info from scheme
       scheme.pdfFile = undefined;
@@ -201,11 +193,11 @@ schemeSchema.statics.cleanupPDFFile = async function(schemeId) {
       
       return {
         success: true,
-        deletedFile: scheme.pdfFile.filename,
-        message: 'PDF file deleted successfully'
+        deletedFile: scheme.pdfFile.publicId,
+        message: 'PDF file deleted successfully from cloud storage'
       };
     } catch (fileError) {
-      console.warn(`⚠️ Failed to delete PDF file ${scheme.pdfFile.filename}:`, fileError.message);
+      console.warn(`⚠️ Failed to delete PDF file from cloud storage ${scheme.pdfFile.publicId}:`, fileError.message);
       return {
         success: false,
         error: fileError.message

@@ -1,5 +1,6 @@
 const { getGeminiModel } = require('../config/googleApis');
 const translationService = require('./translationService');
+const azureEmbeddingService = require('./azureEmbeddingService');
 
 class AIService {
   constructor() {
@@ -17,46 +18,142 @@ class AIService {
     }
   }
 
-  // Generate embeddings for text chunks
-  async generateEmbeddings(textChunks) {
+  // Generate embeddings for text chunks with hybrid Azure/Google approach
+  async generateEmbeddings(textChunks, maxRetries = 3) {
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    // Strategy 1: Try Azure OpenAI first (more reliable)
     try {
-      if (!this.model) {
-        await this.initializeModel();
+      console.log('🔵 Attempting Azure OpenAI embeddings...');
+      const azureResult = await azureEmbeddingService.generateEmbeddings(textChunks, 2);
+      
+      if (azureResult && azureResult.length > 0) {
+        console.log('✅ Azure OpenAI embeddings generated successfully');
+        return azureResult;
       }
-
-      const embeddings = [];
-      
-      // Use text-embedding-004 model for embeddings
-      const embeddingModel = getGeminiModel('text-embedding-004');
-      
-      for (const chunk of textChunks) {
-        const result = await embeddingModel.embedContent(chunk);
-        embeddings.push({
-          text: chunk,
-          embedding: result.embedding.values,
-          metadata: {
-            length: chunk.length,
-            timestamp: new Date()
-          }
-        });
-      }
-
-      return embeddings;
-    } catch (error) {
-      console.error('❌ Error generating embeddings:', error.message);
-      console.log('ℹ️ Falling back to simulated embeddings for development...');
-      
-      // Fallback: Generate simulated embeddings for development
-      return textChunks.map(chunk => ({
-        text: chunk,
-        embedding: Array.from({length: 768}, () => Math.random() - 0.5), // Simulated 768-dim embedding
-        metadata: {
-          length: chunk.length,
-          timestamp: new Date(),
-          simulated: true
-        }
-      }));
+    } catch (azureError) {
+      console.warn('⚠️ Azure OpenAI embedding failed, falling back to Google Gemini:', azureError.message);
     }
+    
+    // Strategy 2: Fallback to Google Gemini
+    console.log('🟡 Falling back to Google Gemini embeddings...');
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        if (!this.model) {
+          await this.initializeModel();
+        }
+
+        console.log(`🧠 Attempting Google embeddings (attempt ${attempt}/${maxRetries})`);
+        console.log(`📊 Processing ${textChunks.length} text chunks`);
+        
+        const embeddings = [];
+        
+        // Try text-embedding-004 model first, with fallback to embedding-001
+        let embeddingModel;
+        let modelName = 'text-embedding-004';
+        
+        try {
+          embeddingModel = getGeminiModel('text-embedding-004');
+        } catch (modelError) {
+          console.warn(`⚠️ Failed to get text-embedding-004 model, trying alternatives: ${modelError.message}`);
+          
+          // Try alternative embedding models
+          try {
+            embeddingModel = getGeminiModel('embedding-001');
+            modelName = 'embedding-001';
+            console.log('🔄 Using embedding-001 as alternative model');
+          } catch (altError) {
+            throw new Error(`Failed to initialize any embedding model: ${altError.message}`);
+          }
+        }
+        
+        // Process chunks with rate limiting to avoid overwhelming the API
+        for (let i = 0; i < textChunks.length; i++) {
+          const chunk = textChunks[i];
+          
+          try {
+            const result = await embeddingModel.embedContent(chunk);
+            embeddings.push({
+              text: chunk,
+              embedding: result.embedding.values,
+              metadata: {
+                length: chunk.length,
+                timestamp: new Date(),
+                model: modelName,
+                provider: 'google'
+              }
+            });
+            
+            // Add small delay between requests to avoid rate limiting
+            if (i < textChunks.length - 1) {
+              await delay(200); // 200ms delay between requests
+            }
+            
+          } catch (chunkError) {
+            console.error(`❌ Error processing chunk ${i + 1}/${textChunks.length}:`, chunkError.message);
+            
+            // If individual chunk fails, try once more with longer delay
+            await delay(1000);
+            try {
+              const retryResult = await embeddingModel.embedContent(chunk);
+              embeddings.push({
+                text: chunk,
+                embedding: retryResult.embedding.values,
+                metadata: {
+                  length: chunk.length,
+                  timestamp: new Date(),
+                  model: modelName,
+                  provider: 'google',
+                  retried: true
+                }
+              });
+            } catch (retryError) {
+              console.error(`❌ Chunk ${i + 1} failed even after retry, skipping:`, retryError.message);
+              // Continue with other chunks instead of failing completely
+            }
+          }
+        }
+
+        if (embeddings.length > 0) {
+          console.log(`✅ Successfully generated ${embeddings.length} Google embeddings`);
+          return embeddings;
+        } else {
+          throw new Error('No embeddings were generated');
+        }
+        
+      } catch (error) {
+        console.error(`❌ Google embedding error (attempt ${attempt}/${maxRetries}):`, error.message);
+        
+        // Check if it's a 503 service unavailable error
+        if (error.message.includes('503') || error.message.includes('Service Unavailable')) {
+          if (attempt < maxRetries) {
+            const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
+            console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+            await delay(waitTime);
+            continue;
+          }
+        } else if (attempt < maxRetries) {
+          await delay(1000);
+          continue;
+        }
+      }
+    }
+    
+    // Strategy 3: Final fallback to simulated embeddings (development only)
+    console.warn('⚠️ Both Azure and Google embedding services failed. Using simulated embeddings for development...');
+    
+    return textChunks.map(chunk => ({
+      text: chunk,
+      embedding: Array.from({length: 1536}, () => Math.random() - 0.5), // Match Azure dimensions
+      metadata: {
+        length: chunk.length,
+        timestamp: new Date(),
+        simulated: true,
+        provider: 'fallback',
+        note: 'Both Azure and Google services unavailable'
+      }
+    }));
   }
 
   // Generate AI response for user questions
@@ -87,16 +184,23 @@ class AIService {
     } catch (error) {
       console.error('❌ Error generating AI response:', error.message);
       
-      // Fallback response when AI service fails
-      console.log('🔄 Using fallback response due to AI service error');
-      const fallbackAnswer = this.generateFallbackResponse(question, relevantContext, 'en');
+      const isGoogleServerError = error.message.includes('503') || error.message.includes('Service Unavailable');
+      
+      if (isGoogleServerError) {
+        console.log('🔄 Using fallback response due to Google Gemini server issues (503 Service Unavailable)');
+      } else {
+        console.log('🔄 Using fallback response due to AI service error');
+      }
+      
+      const fallbackAnswer = this.generateFallbackResponse(question, relevantContext, 'en', isGoogleServerError);
       const translatedFallback = await this.translateResponseToLanguage(fallbackAnswer, language);
       
       return {
         answer: translatedFallback,
         confidence: 0.3,
         sources: this.extractSources(relevantContext),
-        language: language
+        language: language,
+        googleServerError: isGoogleServerError
       };
     }
   }
@@ -127,8 +231,11 @@ class AIService {
   }
 
   // Generate fallback response when AI service is unavailable
-  generateFallbackResponse(question, relevantContext, language) {
+  generateFallbackResponse(question, relevantContext, language, isGoogleServerError = false) {
     const languageText = language === 'mr' ? 'मराठी' : 'English';
+    const serverErrorNote = isGoogleServerError ? 
+      '\n\n⚠️ Note: This simplified response is due to temporary issues with Google Gemini servers (503 Service Unavailable). Our system is working fine - the issue is from Google\'s side. Please try again in a few minutes.' : 
+      '';
     
     if (relevantContext && relevantContext.length > 0) {
       // Use the most relevant context as a simple answer
@@ -136,9 +243,10 @@ class AIService {
         (current.score || 0) > (best.score || 0) ? current : best
       );
       
-      return `Based on the available information about government schemes, here's what I found:\n\n${bestContext.text.substring(0, 500)}...\n\nNote: This is a simplified response. For more detailed information, please contact the relevant government office directly.`;
+      return `Based on the available information about government schemes, here's what I found:\n\n${bestContext.text.substring(0, 500)}...\n\nNote: This is a simplified response. For more detailed information, please contact the relevant government office directly.${serverErrorNote}`;
     } else {
-      return `I apologize, but I'm currently unable to process your question about government schemes. Please try again later or contact the relevant government office directly for assistance.`;
+      const baseMessage = `I apologize, but I'm currently unable to process your question about government schemes. Please try again later or contact the relevant government office directly for assistance.`;
+      return baseMessage + serverErrorNote;
     }
   }
 

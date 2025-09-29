@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-  timeout: 30000,
+  timeout: 120000, // 2 minutes timeout for AI responses
   headers: {
     'Content-Type': 'application/json',
   },
@@ -22,7 +22,7 @@ api.interceptors.request.use(
     if (config.data && typeof config.data === 'object' && 
         (config.method === 'post' || config.method === 'put') &&
         config.headers['Content-Type'] === 'application/json') {
-      console.log('Request data:', config.data); // Debug log
+      // Request data logging removed for production
     }
     
     return config;
@@ -138,6 +138,13 @@ export const apiService = {
     getDocuments: (params) => api.get('/upload/documents', { params }),
     getDocument: (id) => api.get(`/upload/documents/${id}`),
     deleteDocument: (id) => api.delete(`/upload/documents/${id}`),
+  },
+
+  // Analytics (lightweight, 4 documents only)
+  analytics: {
+    getOverview: () => api.get('/analytics/overview'),
+    resetAnalytics: () => api.post('/analytics/reset'),
+    getSummary: () => api.get('/analytics/summary'),
   },
 
   // Health check

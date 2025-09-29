@@ -86,11 +86,20 @@ class ChatController {
         );
       } catch (error) {
         console.error('AI Service error:', error);
+        
+        const isGoogleServerError = error.message && (error.message.includes('503') || error.message.includes('Service Unavailable'));
+        let fallbackMessage = 'I apologize, but I am currently unable to process your question. Please try again later or contact the relevant government office directly.';
+        
+        if (isGoogleServerError) {
+          fallbackMessage += '\n\n⚠️ Note: This issue is due to temporary problems with Google Gemini servers (503 Service Unavailable). Our system is working fine - the issue is from Google\'s side. Please try again in a few minutes.';
+        }
+        
         // Fallback response
         aiResponse = {
-          answer: 'I apologize, but I am currently unable to process your question. Please try again later or contact the relevant government office directly.',
+          answer: fallbackMessage,
           confidence: 0,
-          sources: []
+          sources: [],
+          googleServerError: isGoogleServerError
         };
       }
 
@@ -107,7 +116,8 @@ class ChatController {
             ...ctx.metadata,
             schemeTitle: scheme ? scheme.title : 'Government Scheme',
             schemeId: scheme ? scheme._id : null,
-            filename: scheme?.pdfFile?.filename || null
+            filename: scheme?.pdfFile?.filename || null,
+            url: scheme?.pdfFile?.url || null
           }
         }));
 

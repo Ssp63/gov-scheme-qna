@@ -1,6 +1,7 @@
 const pdfParse = require('pdf-parse');
 const fs = require('fs').promises;
 const path = require('path');
+const axios = require('axios');
 const translationService = require('./translationService');
 
 class PDFExtractionService {
@@ -11,7 +12,7 @@ class PDFExtractionService {
 
   /**
    * Extract text content from a PDF file
-   * @param {string} filePath - Path to the PDF file
+   * @param {string} filePath - Path to the PDF file or cloud URL
    * @param {Object} options - Extraction options
    * @returns {Promise<Object>} Extracted text and metadata
    */
@@ -19,11 +20,18 @@ class PDFExtractionService {
     try {
       console.log(`📄 Starting PDF text extraction for: ${filePath}`);
       
-      // Validate file exists
-      await this.validateFile(filePath);
+      let pdfBuffer;
       
-      // Read PDF file
-      const pdfBuffer = await fs.readFile(filePath);
+      // Check if it's a cloud URL or local file path
+      if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+        // It's a cloud URL - fetch from cloud storage
+        console.log(`☁️ Fetching PDF from cloud storage: ${filePath}`);
+        pdfBuffer = await this.fetchPDFFromCloud(filePath);
+      } else {
+        // It's a local file path
+        await this.validateFile(filePath);
+        pdfBuffer = await fs.readFile(filePath);
+      }
       
       // Configure extraction options
       const extractOptions = {
@@ -135,6 +143,69 @@ class PDFExtractionService {
           extractionTime: 0
         }
       };
+    }
+  }
+
+  /**
+   * Fetch PDF from cloud storage (Cloudinary)
+   * @param {string} cloudUrl - Cloud storage URL
+   * @returns {Promise<Buffer>} PDF buffer
+   */
+  async fetchPDFFromCloud(cloudUrl) {
+    try {
+      console.log(`☁️ Fetching PDF from cloud: ${cloudUrl}`);
+      
+      // Add a small delay to ensure Cloudinary has processed the file
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      let response;
+      let retries = 3;
+      
+      while (retries > 0) {
+        try {
+          response = await axios.get(cloudUrl, {
+            responseType: 'arraybuffer',
+            timeout: 120000, // 2 minutes timeout for PDF processing
+            headers: {
+              'User-Agent': 'Govt-Scheme-QNA/1.0'
+            }
+          });
+          break; // Success, exit retry loop
+        } catch (error) {
+          retries--;
+          if (retries === 0) throw error;
+          console.log(`⚠️ PDF fetch failed, retrying... (${retries} attempts left)`);
+          await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds before retry
+        }
+      }
+      
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch PDF: HTTP ${response.status}`);
+      }
+      
+      const buffer = Buffer.from(response.data);
+      
+      // Basic validation
+      if (buffer.length < 100) {
+        throw new Error('Downloaded file is too small, might be corrupted');
+      }
+      
+      if (buffer.length > this.maxFileSize) {
+        throw new Error(`File size (${buffer.length} bytes) exceeds maximum allowed size (${this.maxFileSize} bytes)`);
+      }
+      
+      // Check PDF header
+      const header = buffer.toString('ascii', 0, 8);
+      if (!header.startsWith('%PDF-')) {
+        console.warn(`⚠️ Downloaded file does not appear to be a valid PDF (header: ${header})`);
+      }
+      
+      console.log(`✅ Successfully fetched PDF from cloud: ${buffer.length} bytes`);
+      return buffer;
+      
+    } catch (error) {
+      console.error(`❌ Failed to fetch PDF from cloud: ${error.message}`);
+      throw new Error(`Cloud PDF fetch failed: ${error.message}`);
     }
   }
 
@@ -394,18 +465,29 @@ class PDFExtractionService {
     try {
       console.log(`🔄 Creating fallback extraction for problematic PDF: ${filePath}`);
       
-      // Get basic file information
-      const stats = await fs.stat(filePath);
-      const fileName = path.basename(filePath);
+      let fileName, fileSize;
+      
+      // Handle cloud URLs vs local files
+      if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+        // Extract filename from URL
+        const urlParts = filePath.split('/');
+        fileName = urlParts[urlParts.length - 1] || 'cloud-document.pdf';
+        fileSize = 0; // Unknown size for cloud files
+      } else {
+        // Local file
+        const stats = await fs.stat(filePath);
+        fileName = path.basename(filePath);
+        fileSize = stats.size;
+      }
       
       // Create a basic fallback result
       const fallbackResult = {
         success: true,
-        text: `[PDF Document: ${fileName}]\n\nThis PDF document could not be processed for text extraction. The file may be corrupted, password-protected, or in an unsupported format.\n\nFile Information:\n- File Name: ${fileName}\n- File Size: ${stats.size} bytes\n- Upload Date: ${new Date().toISOString()}\n\nPlease contact the administrator if you need assistance with this document.`,
+        text: `[PDF Document: ${fileName}]\n\nThis PDF document could not be processed for text extraction. The file may be corrupted, password-protected, or in an unsupported format.\n\nFile Information:\n- File Name: ${fileName}\n- File Size: ${fileSize} bytes\n- Upload Date: ${new Date().toISOString()}\n\nPlease contact the administrator if you need assistance with this document.`,
         metadata: {
           fileName: fileName,
           filePath: filePath,
-          fileSize: stats.size,
+          fileSize: fileSize,
           numpages: 1,
           version: 'unknown',
           textLength: 0,

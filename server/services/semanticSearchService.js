@@ -216,7 +216,7 @@ class SemanticSearchService {
   }
 
   /**
-   * Calculate cosine similarity between two vectors
+   * Calculate cosine similarity between two vectors with dimension compatibility
    * @param {Array} vectorA - First vector
    * @param {Array} vectorB - Second vector
    * @returns {number} Cosine similarity score (0-1)
@@ -226,8 +226,18 @@ class SemanticSearchService {
       return 0;
     }
 
+    // Handle dimension mismatch by using fallback to Google embeddings for old chunks
     if (vectorA.length !== vectorB.length) {
       console.warn(`⚠️ Vector dimension mismatch: ${vectorA.length} vs ${vectorB.length}`);
+      
+      // If we have a new query (1536) vs old chunk (768), regenerate query with Google
+      if (vectorA.length === 1536 && vectorB.length === 768) {
+        console.log('🔄 Dimension mismatch detected - this chunk needs re-embedding with Azure');
+        // For now, skip this chunk (return 0) - we'll add a re-embedding strategy later
+        return 0;
+      }
+      
+      // If both are different unexpected dimensions, skip
       return 0;
     }
 

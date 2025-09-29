@@ -21,6 +21,8 @@ const SchemeCard = ({ scheme }) => {
   const maxDescriptionLength = 100;
   const maxTitleLength = 60;
   
+  // Debug logging removed for production
+  
   const shouldTruncateDescription = scheme.description.length > maxDescriptionLength;
   const shouldTruncateTitle = scheme.title.length > maxTitleLength;
   
@@ -32,18 +34,81 @@ const SchemeCard = ({ scheme }) => {
     ? scheme.description.substring(0, maxDescriptionLength) + '...'
     : scheme.description;
 
-  const handleDownload = () => {
-    if (scheme.pdfFile && scheme.pdfFile.filename) {
-      // Remove /api from the base URL since PDFs are served directly from /uploads
-      const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace('/api', '');
-      const pdfUrl = `${baseUrl}/uploads/schemes/${scheme.pdfFile.filename}`;
+  const handleDownload = async () => {
+    if (scheme.pdfFile && scheme.pdfFile.url) {
       
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = scheme.pdfFile.originalName || `${scheme.title}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        // Always use server endpoint for reliable downloads
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        const downloadUrl = `${baseUrl}/schemes/${scheme._id}/download-pdf`;
+        console.log('Using server download endpoint:', downloadUrl);
+        
+        // Open server endpoint which handles the Cloudinary redirect properly
+        window.open(downloadUrl, '_blank');
+        
+        // Alternative Method 2: Direct Cloudinary fetch (if server method fails)
+        // Uncomment below if you want to also try direct fetch
+        /*
+        setTimeout(async () => {
+          try {
+            console.log('Attempting direct fetch from Cloudinary:', scheme.pdfFile.url);
+            
+            const response = await fetch(scheme.pdfFile.url, {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/pdf',
+              },
+            });
+            
+            console.log('Fetch response status:', response.status);
+            console.log('Fetch response headers:', Object.fromEntries(response.headers.entries()));
+            
+            if (response.ok) {
+              const blob = await response.blob();
+              console.log('Blob created, size:', blob.size, 'type:', blob.type);
+              
+              // Verify it's actually a PDF
+              if (blob.type === 'application/pdf' || blob.type === 'application/octet-stream') {
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = scheme.pdfFile.filename || `${scheme.title}.pdf`;
+                link.style.display = 'none';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Clean up the URL object
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
+                
+                console.log('Direct download initiated successfully');
+              } else {
+                console.warn('Downloaded file is not a PDF:', blob.type);
+                window.open(scheme.pdfFile.url, '_blank');
+              }
+            } else {
+              console.error('Failed to fetch PDF:', response.status, response.statusText);
+              window.open(scheme.pdfFile.url, '_blank');
+            }
+          } catch (fetchError) {
+            console.error('Direct fetch failed:', fetchError);
+            window.open(scheme.pdfFile.url, '_blank');
+          }
+        }, 1000);
+        */
+        
+      } catch (error) {
+        console.error('Error with server download:', error);
+        // Final fallback: direct Cloudinary URL
+        console.log('Falling back to direct Cloudinary URL');
+        window.open(scheme.pdfFile.url, '_blank');
+      }
+    } else {
+      console.log('No PDF file found for scheme:', scheme._id);
+      console.log('scheme.pdfFile:', scheme.pdfFile);
+      alert('PDF file not available for this scheme.');
     }
   };
 
@@ -78,7 +143,7 @@ const SchemeCard = ({ scheme }) => {
       </div>
 
       <div className="scheme-footer">
-        {scheme.pdfFile && scheme.pdfFile.filename && (
+        {scheme.pdfFile && scheme.pdfFile.url && (
           <button 
             className="download-btn"
             onClick={handleDownload}

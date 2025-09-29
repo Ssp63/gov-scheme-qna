@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
 const { body } = require('express-validator');
 const {
   getAllSchemes,
@@ -14,37 +12,15 @@ const {
   getAdminSchemes,
   getProcessingStatus,
   reprocessPDF,
+  downloadSchemePDF,
   getSchemeChunks
 } = require('../controllers/scheme');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { handleValidationErrors } = require('../middleware/validation');
+const { trackPageView, trackSchemeView } = require('../middleware/analyticsMiddleware');
 
-// Configure multer for PDF uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/schemes/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `scheme-${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
-});
-
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'application/pdf') {
-    cb(null, true);
-  } else {
-    cb(new Error('Only PDF files are allowed'), false);
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  }
-});
+// Import cloud storage configuration
+const { upload, handleMulterError } = require('../services/cloudStorage');
 
 // Validation rules
 const createSchemeValidation = [
@@ -84,7 +60,7 @@ const updateSchemeValidation = [
 // @route   GET /api/schemes
 // @desc    Get all active schemes for citizens
 // @access  Public
-router.get('/', getAllSchemes);
+router.get('/', trackPageView, getAllSchemes);
 
 // Admin routes (these must come before /:id to avoid conflicts)
 // @route   GET /api/schemes/admin/all
@@ -133,9 +109,14 @@ router.post('/:id/reprocess-pdf', authenticateToken, requireAdmin, reprocessPDF)
 // @access  Private (Admin)
 router.get('/:id/chunks', authenticateToken, requireAdmin, getSchemeChunks);
 
+// @route   GET /api/schemes/:id/download-pdf
+// @desc    Download PDF for a scheme
+// @access  Public
+router.get('/:id/download-pdf', downloadSchemePDF);
+
 // @route   GET /api/schemes/:id
 // @desc    Get single scheme details
 // @access  Public
-router.get('/:id', getScheme);
+router.get('/:id', trackSchemeView, getScheme);
 
 module.exports = router;

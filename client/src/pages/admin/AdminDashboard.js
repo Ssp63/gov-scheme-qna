@@ -42,6 +42,12 @@ const UserIcon = () => (
   </svg>
 );
 
+const AnalyticsIcon = () => (
+  <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+  </svg>
+);
+
 const AdminDashboard = () => {
   const { isSuperAdmin } = useAuth();
   const navigate = useNavigate();
@@ -301,6 +307,14 @@ const AdminDashboard = () => {
             <p>Manage government schemes</p>
           </div>
           <div className="header-actions">
+            <button 
+              className="btn-primary"
+              onClick={() => navigate('/admin/analytics')}
+              style={{ marginRight: '12px' }}
+            >
+              <AnalyticsIcon />
+              Analytics
+            </button>
             {isSuperAdmin() && (
               <button 
                 className="btn-primary"

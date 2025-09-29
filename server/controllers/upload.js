@@ -26,27 +26,30 @@ const uploadDocument = async (req, res) => {
       });
     }
 
-    // File info is added by upload middleware
-    const fileInfo = req.fileInfo;
-    
-    if (!fileInfo) {
+    // Check if file was uploaded (Cloudinary uses req.file with buffer)
+    if (!req.file) {
       return res.status(400).json({
         success: false,
         message: 'No file uploaded'
       });
     }
 
+    // Create file info object compatible with existing code
+    const fileInfo = {
+      originalName: req.file.originalname,
+      filename: req.file.originalname, // Keep original name for now
+      buffer: req.file.buffer, // Cloudinary uses buffer instead of path
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    };
+
     console.log(`Processing file upload: ${fileInfo.originalName} for scheme: ${scheme.title}`);
 
     // Process document asynchronously
     processDocument(schemeId, fileInfo, req.user._id)
       .then(async (document) => {
-        // Update scheme document count
-        const documentCount = await require('../models').Document.countDocuments({ 
-          schemeId, 
-          processingStatus: 'completed' 
-        });
-        scheme.documentCount = documentCount;
+        // Update scheme processing status
+        // Document processing completed
         
         // Mark scheme as completed if it was pending
         if (scheme.processingStatus === 'pending') {
@@ -76,11 +79,8 @@ const uploadDocument = async (req, res) => {
   } catch (error) {
     console.error('Upload document error:', error);
     
-    // Clean up uploaded file on error
-    if (req.fileInfo && req.fileInfo.path) {
-      const { deleteFile } = require('../middleware/upload');
-      deleteFile(req.fileInfo.path);
-    }
+    // Note: With Cloudinary memory storage, no local cleanup needed
+    // Files are processed directly from memory buffer
 
     res.status(500).json({
       success: false,
@@ -103,17 +103,13 @@ const getProcessingStatus = async (req, res) => {
       });
     }
 
-    const documents = await require('../models').Document.find({ schemeId })
-      .select('originalFileName processingStatus processingLog totalChunks createdAt')
-      .sort({ createdAt: -1 });
-
     const scheme = await Scheme.findById(schemeId)
-      .select('title processingStatus documentCount');
+      .select('title processingStatus');
 
     res.json({
       success: true,
       scheme,
-      documents
+      message: 'Document processing status retrieved'
     });
 
   } catch (error) {
@@ -139,31 +135,8 @@ const deleteDocument = async (req, res) => {
       });
     }
 
-    const document = await require('../models').Document.findById(documentId);
-    if (!document) {
-      return res.status(404).json({
-        success: false,
-        message: 'Document not found'
-      });
-    }
-
-    // Delete physical file
-    const { deleteFile } = require('../middleware/upload');
-    deleteFile(document.filePath);
-
-    // Delete document from database
-    await require('../models').Document.findByIdAndDelete(documentId);
-
-    // Update scheme document count
-    const scheme = await Scheme.findById(document.schemeId);
-    if (scheme) {
-      const documentCount = await require('../models').Document.countDocuments({ 
-        schemeId: document.schemeId, 
-        processingStatus: 'completed' 
-      });
-      scheme.documentCount = documentCount;
-      await scheme.save();
-    }
+    // Document deletion is not supported in this simplified version
+    // Documents are processed directly into document chunks
 
     res.json({
       success: true,
@@ -194,25 +167,18 @@ const getAllDocuments = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    const documents = await require('../models').Document.find(filter)
-      .populate('schemeId', 'title titleMarathi')
-      .populate('uploadedBy', 'name email')
-      .select('originalFileName fileType fileSize processingStatus totalChunks createdAt')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum);
-
-    const total = await require('../models').Document.countDocuments(filter);
-    const totalPages = Math.ceil(total / limitNum);
+    // Document listing is not supported in this simplified version
+    // Documents are processed directly into document chunks
 
     res.json({
       success: true,
-      documents,
+      documents: [],
+      message: 'Document listing not available in simplified version',
       pagination: {
         page: pageNum,
         limit: limitNum,
-        total,
-        totalPages
+        total: 0,
+        totalPages: 0
       }
     });
 

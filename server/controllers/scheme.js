@@ -1,6 +1,8 @@
 const { Scheme } = require('../models');
 const { validateObjectId, sanitizeInput } = require('../middleware/validation');
 const embeddingService = require('../services/embeddingService');
+const { deleteFile, getFileUrl } = require('../services/cloudStorage');
+const cloudinary = require('cloudinary').v2;
 const path = require('path');
 
 // @desc    Get all schemes for citizens (public)
@@ -118,9 +120,13 @@ const getScheme = async (req, res) => {
 // @access  Private (Admin)
 const createScheme = async (req, res) => {
   try {
-    console.log('Create scheme request body:', req.body);
+    console.log('=== CREATE SCHEME DEBUG ===');
+    console.log('Request body:', req.body);
     console.log('Request file:', req.file);
     console.log('User from auth middleware:', req.user);
+    console.log('Request headers:', req.headers);
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('================================');
     
     const {
       title,
@@ -144,31 +150,129 @@ const createScheme = async (req, res) => {
       createdBy: req.user._id
     };
 
-    // Add file information if uploaded
+    // Handle PDF file upload to Cloudinary (simplified approach)
+    let cloudinaryUrl = null;
     if (req.file) {
-      schemeData.pdfFile = {
-        originalName: req.file.originalname,
-        filename: req.file.filename,
-        path: req.file.path,
-        size: req.file.size,
-        uploadDate: new Date()
-      };
-      console.log('File uploaded:', req.file.filename);
+      console.log('=== CLOUDINARY FILE DEBUG ===');
+      console.log('File received:', req.file.originalname, 'Size:', req.file.size);
+      console.log('================================');
+      
+      try {
+        // Upload to Cloudinary using memory buffer
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { 
+              folder: 'govt-schemes',
+              resource_type: 'raw',
+              access_mode: 'public',
+              use_filename: true,
+              unique_filename: true,
+              format: 'pdf'
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+
+        cloudinaryUrl = uploadResult.secure_url;
+        
+        // Fix filename encoding issue
+        let cleanFilename = req.file.originalname;
+        try {
+          // Try to decode if it's URL encoded
+          if (cleanFilename.includes('%')) {
+            cleanFilename = decodeURIComponent(cleanFilename);
+          }
+          
+          // Handle UTF-8 encoding issues - try multiple approaches
+          if (cleanFilename.includes('à¤') || cleanFilename.includes('à¥')) {
+            // This is a double-encoded UTF-8 string, decode it properly
+            cleanFilename = Buffer.from(cleanFilename, 'latin1').toString('utf8');
+          }
+          
+          // Additional check for corrupted encoding
+          if (cleanFilename.includes('\\x')) {
+            // Handle hex-encoded characters
+            cleanFilename = cleanFilename.replace(/\\x([0-9A-Fa-f]{2})/g, (match, hex) => {
+              return String.fromCharCode(parseInt(hex, 16));
+            });
+          }
+          
+          console.log('Filename cleaning:', {
+            original: req.file.originalname,
+            cleaned: cleanFilename
+          });
+        } catch (error) {
+          console.log('Filename encoding fix failed, using original:', error.message);
+        }
+
+        // Use the Cloudinary URL as-is and let the server handle the download
+        let pdfUrl = uploadResult.secure_url;
+        console.log('Cloudinary upload result:', {
+          secure_url: uploadResult.secure_url,
+          public_id: uploadResult.public_id,
+          resource_type: uploadResult.resource_type,
+          format: uploadResult.format
+        });
+
+        schemeData.pdfFile = {
+          url: pdfUrl,
+          publicId: uploadResult.public_id,
+          filename: cleanFilename,
+          path: pdfUrl // Use URL as path for RAG compatibility
+        };
+        
+        console.log('File uploaded to Cloudinary successfully:', {
+          originalFilename: req.file.originalname,
+          cleanedFilename: cleanFilename,
+          publicId: uploadResult.public_id,
+          url: uploadResult.secure_url
+        });
+      } catch (uploadError) {
+        console.error('Cloudinary upload failed:', uploadError);
+        throw new Error(`File upload failed: ${uploadError.message}`);
+      }
+    } else {
+      console.log('No file uploaded');
     }
 
     // Create new scheme
+    console.log('Creating scheme with data:', schemeData);
     const newScheme = new Scheme(schemeData);
-    await newScheme.save();
+    
+    try {
+      await newScheme.save();
+      console.log('Scheme saved to database successfully:', newScheme._id);
+    } catch (saveError) {
+      console.error('Database save error:', saveError);
+      
+      // If file was uploaded but database save failed, clean up the file
+      if (req.file && req.file.path) {
+        try {
+          const fs = require('fs').promises;
+          await fs.unlink(req.file.path);
+          console.log('Cleaned up uploaded file after database error');
+        } catch (cleanupError) {
+          console.error('Failed to cleanup uploaded file:', cleanupError);
+        }
+      }
+      
+      throw saveError;
+    }
 
     // Populate created by info
     await newScheme.populate('createdBy', 'name email');
 
     // Process PDF if uploaded (async, don't wait for completion)
-    if (req.file && req.file.path) {
+    if (req.file && cloudinaryUrl) {
       console.log(`🔄 Starting PDF processing for scheme: ${newScheme._id}`);
+      console.log(`📄 Using PDF URL: ${cloudinaryUrl}`);
       
-      // Process PDF in background
-      embeddingService.processPDFForScheme(newScheme._id, req.file.path, {
+      // Process PDF in background using Cloudinary URL
+      embeddingService.processPDFForScheme(newScheme._id, cloudinaryUrl, {
         startTime: Date.now(),
         chunkSize: 500,
         overlap: 50
@@ -181,6 +285,8 @@ const createScheme = async (req, res) => {
       }).catch(error => {
         console.error(`❌ PDF processing error for scheme ${newScheme._id}:`, error.message);
       });
+    } else {
+      console.log('⚠️ PDF processing skipped - no file or URL available');
     }
 
     res.status(201).json({
@@ -203,9 +309,40 @@ const createScheme = async (req, res) => {
       });
     }
 
+    // Handle multer errors
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'File too large. Maximum size is 10MB.'
+      });
+    }
+
+    if (error.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        success: false,
+        message: 'Too many files. Only one file allowed.'
+      });
+    }
+
+    // Handle file system errors
+    if (error.code === 'ENOENT') {
+      return res.status(500).json({
+        success: false,
+        message: 'Upload directory not found. Please contact administrator.'
+      });
+    }
+
+    if (error.code === 'EACCES') {
+      return res.status(500).json({
+        success: false,
+        message: 'Permission denied. Please contact administrator.'
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Server error while creating scheme'
+      message: 'Server error while creating scheme',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -244,28 +381,94 @@ const updateScheme = async (req, res) => {
     if (description) updateData.description = sanitizeInput(description.trim());
     if (category) updateData.category = category.trim();
 
-    // Handle file update if uploaded
+    // Handle file update if uploaded (simplified Cloudinary approach)
     if (req.file) {
-      // Delete old PDF file if it exists
-      if (scheme.pdfFile && scheme.pdfFile.filename) {
+      // Delete old PDF file from Cloudinary if it exists
+      if (scheme.pdfFile && scheme.pdfFile.publicId) {
         try {
-          const fs = require('fs').promises;
-          const path = require('path');
-          const oldFilePath = path.join(__dirname, '..', 'uploads', 'schemes', scheme.pdfFile.filename);
-          await fs.unlink(oldFilePath);
-          console.log(`🗑️ Deleted old PDF file: ${scheme.pdfFile.filename}`);
+          await deleteFile(scheme.pdfFile.publicId);
+          console.log(`🗑️ Deleted old PDF file from Cloudinary: ${scheme.pdfFile.publicId}`);
         } catch (fileError) {
-          console.warn(`⚠️ Failed to delete old PDF file ${scheme.pdfFile.filename}:`, fileError.message);
+          console.warn(`⚠️ Failed to delete old PDF file from Cloudinary ${scheme.pdfFile.publicId}:`, fileError.message);
         }
       }
       
-      updateData.pdfFile = {
-        originalName: req.file.originalname,
-        filename: req.file.filename,
-        path: req.file.path,
-        size: req.file.size,
-        uploadDate: new Date()
-      };
+      try {
+        // Upload new file to Cloudinary using memory buffer
+        const uploadResult = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { 
+              folder: 'govt-schemes',
+              resource_type: 'raw',
+              access_mode: 'public',
+              use_filename: true,
+              unique_filename: true,
+              format: 'pdf'
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+
+        // Fix filename encoding issue
+        let cleanFilename = req.file.originalname;
+        try {
+          // Try to decode if it's URL encoded
+          if (cleanFilename.includes('%')) {
+            cleanFilename = decodeURIComponent(cleanFilename);
+          }
+          
+          // Handle UTF-8 encoding issues - try multiple approaches
+          if (cleanFilename.includes('à¤') || cleanFilename.includes('à¥')) {
+            // This is a double-encoded UTF-8 string, decode it properly
+            cleanFilename = Buffer.from(cleanFilename, 'latin1').toString('utf8');
+          }
+          
+          // Additional check for corrupted encoding
+          if (cleanFilename.includes('\\x')) {
+            // Handle hex-encoded characters
+            cleanFilename = cleanFilename.replace(/\\x([0-9A-Fa-f]{2})/g, (match, hex) => {
+              return String.fromCharCode(parseInt(hex, 16));
+            });
+          }
+          
+          console.log('Filename cleaning (update):', {
+            original: req.file.originalname,
+            cleaned: cleanFilename
+          });
+        } catch (error) {
+          console.log('Filename encoding fix failed, using original:', error.message);
+        }
+
+        // Use the Cloudinary URL as-is and let the server handle the download
+        let pdfUrl = uploadResult.secure_url;
+        console.log('Cloudinary upload result:', {
+          secure_url: uploadResult.secure_url,
+          public_id: uploadResult.public_id,
+          resource_type: uploadResult.resource_type,
+          format: uploadResult.format
+        });
+
+        updateData.pdfFile = {
+          url: pdfUrl,
+          publicId: uploadResult.public_id,
+          filename: cleanFilename,
+          path: pdfUrl // Use URL as path for RAG compatibility
+        };
+        
+        console.log('New file uploaded to Cloudinary successfully:', {
+          originalFilename: req.file.originalname,
+          cleanedFilename: cleanFilename,
+          publicId: uploadResult.public_id,
+          url: uploadResult.secure_url
+        });
+      } catch (uploadError) {
+        console.error('Cloudinary upload failed:', uploadError);
+        throw new Error(`File upload failed: ${uploadError.message}`);
+      }
     }
 
     // Update scheme
@@ -277,14 +480,16 @@ const updateScheme = async (req, res) => {
     ).populate('createdBy', 'name email');
 
     // Process new PDF if uploaded (async, don't wait for completion)
-    if (req.file && req.file.path) {
+    if (req.file && updateData.pdfFile && updateData.pdfFile.url) {
+      const cloudinaryUrl = updateData.pdfFile.url;
       console.log(`🔄 Starting PDF processing for updated scheme: ${id}`);
+      console.log(`📄 Using PDF URL: ${cloudinaryUrl}`);
       
       // Delete existing chunks for this scheme
       await embeddingService.deleteChunksForScheme(id);
       
-      // Process new PDF in background
-      embeddingService.processPDFForScheme(id, req.file.path, {
+      // Process new PDF in background using Cloudinary URL
+      embeddingService.processPDFForScheme(id, cloudinaryUrl, {
         startTime: Date.now(),
         chunkSize: 500,
         overlap: 50
@@ -297,6 +502,8 @@ const updateScheme = async (req, res) => {
       }).catch(error => {
         console.error(`❌ PDF processing error for updated scheme ${id}:`, error.message);
       });
+    } else {
+      console.log('⚠️ PDF processing skipped - no file or URL available');
     }
 
     console.log('Scheme updated successfully:', updatedScheme);
@@ -490,7 +697,7 @@ const reprocessPDF = async (req, res) => {
       });
     }
 
-    if (!scheme.pdfFile || !scheme.pdfFile.path) {
+    if (!scheme.pdfFile || !scheme.pdfFile.url) {
       return res.status(400).json({
         success: false,
         message: 'No PDF file found for this scheme'
@@ -500,8 +707,8 @@ const reprocessPDF = async (req, res) => {
     // Delete existing chunks
     await embeddingService.deleteChunksForScheme(id);
 
-    // Reprocess PDF
-    const result = await embeddingService.processPDFForScheme(id, scheme.pdfFile.path, {
+    // Reprocess PDF using the URL
+    const result = await embeddingService.processPDFForScheme(id, scheme.pdfFile.url, {
       startTime: Date.now(),
       chunkSize: 500,
       overlap: 50
@@ -530,6 +737,95 @@ const reprocessPDF = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while reprocessing PDF'
+    });
+  }
+};
+
+// @desc    Download PDF for a scheme
+// @route   GET /api/schemes/:id/download-pdf
+// @access  Public
+const downloadSchemePDF = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate ObjectId
+    if (!validateObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid scheme ID'
+      });
+    }
+
+    // Find scheme
+    const scheme = await Scheme.findById(id);
+    if (!scheme || !scheme.isActive) {
+      return res.status(404).json({
+        success: false,
+        message: 'Scheme not found or not active'
+      });
+    }
+
+    if (!scheme.pdfFile || !scheme.pdfFile.url) {
+      return res.status(404).json({
+        success: false,
+        message: 'PDF file not found for this scheme'
+      });
+    }
+
+    console.log('PDF download requested for scheme:', scheme.title);
+    console.log('PDF URL:', scheme.pdfFile.url);
+
+    try {
+      // First, let's test what Cloudinary returns
+      const https = require('https');
+      const http = require('http');
+      const url = require('url');
+      
+      const parsedUrl = url.parse(scheme.pdfFile.url);
+      const client = parsedUrl.protocol === 'https:' ? https : http;
+      
+      const testReq = client.request(parsedUrl, (testRes) => {
+        console.log('Cloudinary response status:', testRes.statusCode);
+        console.log('Cloudinary response headers:', testRes.headers);
+        
+        // Check if it's actually a PDF
+        const contentType = testRes.headers['content-type'];
+        const contentLength = testRes.headers['content-length'];
+        
+        console.log('Content-Type:', contentType);
+        console.log('Content-Length:', contentLength);
+        
+        if (contentType && contentType.includes('application/pdf')) {
+          console.log('✅ Confirmed: This is a PDF file');
+        } else {
+          console.log('⚠️ Warning: Content-Type suggests this might not be a PDF');
+        }
+        
+        testRes.destroy(); // Don't download the full file, just check headers
+      });
+      
+      testReq.on('error', (err) => {
+        console.error('Error testing Cloudinary URL:', err.message);
+      });
+      
+      testReq.setTimeout(5000, () => {
+        console.log('Timeout testing Cloudinary URL');
+        testReq.destroy();
+      });
+      
+      testReq.end();
+    } catch (testError) {
+      console.error('Error setting up Cloudinary test:', testError.message);
+    }
+
+    // Redirect to Cloudinary URL with proper headers
+    res.redirect(scheme.pdfFile.url);
+
+  } catch (error) {
+    console.error('Download PDF error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while downloading PDF'
     });
   }
 };
@@ -712,5 +1008,6 @@ module.exports = {
   getAdminSchemes,
   getProcessingStatus,
   reprocessPDF,
+  downloadSchemePDF,
   getSchemeChunks
 };

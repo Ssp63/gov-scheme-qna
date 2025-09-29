@@ -1,0 +1,253 @@
+/* Charts Section Component Styles */
+.charts-section {
+  background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 2px solid #f3f4f6;
+  margin-bottom: 32px;
+}
+
+.charts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 3px solid #f3f4f6;
+}
+
+.charts-header h2 {
+  font-family: 'Times New Roman', serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+.charts-content {
+  min-height: 400px;
+}
+
+.chart-container h3 {
+  font-family: 'Times New Roman', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+.chart-wrapper {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid #f3f4f6;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Chart Tooltip Styles */
+.chart-tooltip {
+  background: linear-gradient(145deg, #1f2937 0%, #374151 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #4b5563;
+}
+
+.tooltip-label {
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #f9fafb;
+  font-size: 0.9rem;
+}
+
+.tooltip-item {
+  margin: 4px 0;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tooltip-item::before {
+  content: '●';
+  font-size: 0.6rem;
+}
+
+/* Loading State */
+.charts-section.loading {
+  background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
+  border: 2px solid #e5e7eb;
+}
+
+.skeleton-title {
+  width: 200px;
+  height: 24px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 6px;
+}
+
+
+.skeleton-chart {
+  width: 100%;
+  height: 400px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 12px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .charts-section {
+    padding: 24px 20px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .charts-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    margin-bottom: 24px;
+  }
+  
+  .charts-header h2 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+  
+  .chart-tabs {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .tab-button {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+  
+  .chart-wrapper {
+    padding: 16px;
+  }
+  
+  .chart-container h3 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .charts-section {
+    padding: 20px 16px;
+    border-radius: 12px;
+  }
+  
+  .charts-header {
+    margin-bottom: 20px;
+  }
+  
+  .charts-header h2 {
+    font-size: 1.3rem;
+  }
+  
+  .chart-tabs {
+    gap: 4px;
+    padding: 2px;
+  }
+  
+  .tab-button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+  
+  .chart-wrapper {
+    padding: 12px;
+  }
+  
+  .chart-container h3 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+}
+
+/* No data message */
+.no-data-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #6b7280;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 40px;
+}
+
+.no-data-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.no-data-message h4 {
+  color: #374151;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.no-data-message p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.no-data-message ul {
+  text-align: left;
+  margin: 16px 0;
+  padding-left: 20px;
+}
+
+.no-data-message li {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+  .charts-section {
+    padding: 16px 12px;
+  }
+  
+  .charts-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .tab-button {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+  
+  .chart-wrapper {
+    padding: 8px;
+  }
+}

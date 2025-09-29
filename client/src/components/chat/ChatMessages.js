@@ -33,13 +33,26 @@ const ChatMessages = ({ messages, isLoading, onScroll, messagesContainerRef }) =
   };
 
   const handleSourceClick = (source) => {
-    if (source.type === 'pdf_chunk' && source.metadata?.filename) {
-      // Construct PDF URL similar to scheme card download
-      const baseUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace('/api', '');
-      const pdfUrl = `${baseUrl}/uploads/schemes/${source.metadata.filename}`;
-      
-      // Open PDF in new tab
-      window.open(pdfUrl, '_blank');
+    console.log('Source clicked:', source);
+    
+    if (source.type === 'pdf_chunk') {
+      // Method 1: Try direct Cloudinary URL if available
+      if (source.metadata?.url) {
+        console.log('Opening PDF from direct URL:', source.metadata.url);
+        window.open(source.metadata.url, '_blank');
+      } 
+      // Method 2: Fallback to server download endpoint if we have schemeId
+      else if (source.metadata?.schemeId) {
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        const downloadUrl = `${baseUrl}/schemes/${source.metadata.schemeId}/download-pdf`;
+        console.log('Opening PDF from server endpoint:', downloadUrl);
+        window.open(downloadUrl, '_blank');
+      }
+      // Method 3: Show helpful message if no URL available
+      else {
+        console.warn('No PDF URL or scheme ID available for source:', source);
+        alert('PDF file not available for this source.');
+      }
     }
   };
   return (

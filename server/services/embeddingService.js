@@ -58,6 +58,14 @@ class EmbeddingService {
   async processPDFForScheme(schemeId, pdfFilePath, options = {}) {
     try {
       console.log(`🔄 Processing PDF for scheme ${schemeId}: ${pdfFilePath}`);
+      console.log(`📊 Processing options:`, options);
+      
+      // Get scheme information to include PDF URL in metadata
+      const scheme = await Scheme.findById(schemeId);
+      const pdfUrl = scheme?.pdfFile?.url || null;
+      const pdfFilename = scheme?.pdfFile?.filename || null;
+      
+      console.log(`📋 Scheme info - Title: ${scheme?.title}, PDF URL: ${pdfUrl}`);
       
       // Step 1: Extract text from PDF
       let extractionResult = await pdfExtractionService.extractTextFromPDF(pdfFilePath, options);
@@ -128,7 +136,11 @@ class EmbeddingService {
           metadata: {
             ...chunk.metadata,
             pageNumber: this.extractPageNumber(chunk.metadata.section, i),
-            chunkIndex: i
+            chunkIndex: i,
+            // Add PDF URL information for frontend access
+            url: pdfUrl,
+            filename: pdfFilename,
+            schemeTitle: scheme?.title || 'Government Scheme'
           },
           embedding: embedding.embedding,
           processingStatus: 'completed',
