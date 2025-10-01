@@ -5,6 +5,7 @@ import ChatHeader from '../../components/chat/ChatHeader';
 import ChatMessages from '../../components/chat/ChatMessages';
 import ChatInput from '../../components/chat/ChatInput';
 import FAQSidebar from '../../components/chat/FAQSidebar';
+import Footer from '../../components/common/Footer';
 import './ChatInterface.css';
 
 const ChatInterface = () => {
@@ -374,6 +375,9 @@ All information comes from official government sources and is regularly updated 
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

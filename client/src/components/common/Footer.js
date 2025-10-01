@@ -69,7 +69,8 @@ const Footer = () => {
                 For official information, please refer to the respective government departments.
               </p>
               <p className="footer-disclaimer">
-                Developed as a project for Zilla Parishad Sangli by students of Walchand College of Engineering, Sangli.
+              Designed & developed a project for Zilla Parishad Sangli by Student Mr. Shreyash pawar & team under guidance of Dr.U.B.Chavan, 
+              Department of IT , walchand college of engineering ,sangli 
               </p>
             </div>
             

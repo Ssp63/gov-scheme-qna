@@ -14,6 +14,7 @@ import UserProfile from './pages/admin/UserProfile';
 import Analytics from './pages/admin/Analytics';
 import AIServices from './pages/admin/AIServices';
 import ChatInterface from './pages/citizen/ChatInterface';
+import SchemeDetail from './pages/citizen/SchemeDetail';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
@@ -80,6 +81,7 @@ function App() {
           <Routes>
             {/* Public Citizen Routes */}
             <Route path="/" element={<HomePage />} />
+            <Route path="/scheme/:schemeId" element={<SchemeDetail />} />
             <Route path="/chat" element={<ChatInterface />} />
             <Route path="/chat/:schemeId" element={<ChatInterface />} />
             

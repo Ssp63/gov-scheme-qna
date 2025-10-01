@@ -17,22 +17,13 @@ const DownloadIcon = () => (
 );
 
 const SchemeCard = ({ scheme }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const maxDescriptionLength = 100;
   const maxTitleLength = 60;
   
-  // Debug logging removed for production
-  
-  const shouldTruncateDescription = scheme.description.length > maxDescriptionLength;
   const shouldTruncateTitle = scheme.title.length > maxTitleLength;
   
   const truncatedTitle = shouldTruncateTitle 
     ? scheme.title.substring(0, maxTitleLength) + '...'
     : scheme.title;
-    
-  const truncatedDescription = shouldTruncateDescription && !isExpanded
-    ? scheme.description.substring(0, maxDescriptionLength) + '...'
-    : scheme.description;
 
   const handleDownload = async () => {
     if (scheme.pdfFile && scheme.pdfFile.url) {
@@ -114,31 +105,21 @@ const SchemeCard = ({ scheme }) => {
 
   return (
     <div className="scheme-card">
-      <div className="scheme-header">
-        <div className="scheme-category">
-          {scheme.category}
-        </div>
-      </div>
+      <span className="scheme-category">
+        {scheme.category}
+      </span>
       
       <div className="scheme-content">
-        <h3 className="scheme-title preserve-original-text notranslate" title={scheme.title}>
-          {truncatedTitle}
-        </h3>
+        <Link to={`/scheme/${scheme._id}`} className="scheme-title-link">
+          <h3 className="scheme-title preserve-original-text notranslate" title={scheme.title}>
+            {truncatedTitle}
+          </h3>
+        </Link>
         
         <div className="scheme-description-container">
-          <div className="scheme-description-wrapper">
-            <p className={`scheme-description preserve-original-text notranslate ${isExpanded ? 'expanded' : ''}`}>
-              {isExpanded ? scheme.description : truncatedDescription}
-            </p>
-            {shouldTruncateDescription && (
-              <button 
-                className="read-more-btn"
-                onClick={() => setIsExpanded(!isExpanded)}
-              >
-                {isExpanded ? 'Read Less' : 'Read More'}
-              </button>
-            )}
-          </div>
+          <p className="scheme-description preserve-original-text notranslate">
+            {scheme.description}
+          </p>
         </div>
       </div>
 
