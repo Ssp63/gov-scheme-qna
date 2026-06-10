@@ -148,7 +148,234 @@
   box-shadow: none;
 }
 
-/* Responsive Design */
+/* ── Mic Button ──────────────────────────────────────────────── */
+.mic-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0369a1;
+  margin-left: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(3, 105, 161, 0.15);
+  position: relative;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-width: 40px;
+  min-height: 40px;
+  align-self: center;
+}
+
+.mic-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%);
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(3, 105, 161, 0.25);
+}
+
+.mic-button:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Active / recording state */
+.mic-button.mic-active {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+  animation: micGlow 1.4s ease-in-out infinite;
+}
+
+@keyframes micGlow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15); }
+  50%       { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.08); }
+}
+
+/* Outer pulse ring shown when listening */
+.mic-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(220, 38, 38, 0.5);
+  animation: pulseRing 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulseRing {
+  0%   { transform: scale(0.85); opacity: 1; }
+  100% { transform: scale(1.4);  opacity: 0; }
+}
+
+/* Listening border on the input wrapper */
+.input-wrapper.listening {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+/* ── Interim (live) transcript preview ───────────────────────── */
+.voice-interim-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #92400e;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.voice-interim-dot {
+  width: 8px;
+  height: 8px;
+  background: #f59e0b;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: dotBlink 1s ease-in-out infinite;
+}
+
+@keyframes dotBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.voice-interim-text {
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ── Voice error banner ──────────────────────────────────────── */
+.voice-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #991b1b;
+  animation: fadeIn 0.2s ease;
+}
+
+.voice-error-close {
+  background: none;
+  border: none;
+  color: #991b1b;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.voice-error-close:hover { color: #7f1d1d; }
+
+/* ── Language Selector ───────────────────────────────────────── */
+.voice-lang-selector {
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: 4px;
+  margin-right: 2px;
+}
+
+.voice-lang-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.voice-lang-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.voice-lang-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 120px;
+  animation: menuSlideUp 0.15s ease;
+}
+
+@keyframes menuSlideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);   }
+}
+
+.voice-lang-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.voice-lang-option:hover    { background: #f1f5f9; }
+.voice-lang-option.active   { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+
+.lang-label {
+  font-weight: 700;
+  font-size: 12px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.lang-full {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.voice-lang-option.active .lang-full { color: #3b82f6; }
+
+/* ── Responsive Design */
 @media (max-width: 768px) {
   .chat-input-area {
     padding: 8px;
@@ -186,6 +413,21 @@
     margin-left: 3px;
     flex-shrink: 0;
   }
+
+  .mic-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    margin-left: 3px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .voice-lang-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -218,6 +460,27 @@
     border-radius: 14px;
     margin-left: 2px;
     flex-shrink: 0;
+  }
+
+  .mic-button {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    margin-left: 2px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .voice-lang-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 9px;
+  }
+
+  .voice-interim-preview,
+  .voice-error-banner {
+    font-size: 12px;
+    padding: 5px 10px;
   }
 }
 
@@ -252,6 +515,17 @@
     margin-left: 1px;
     flex-shrink: 0;
   }
+
+  .mic-button {
+    width: 26px;
+    height: 26px;
+    border-radius: 13px;
+    margin-left: 1px;
+    min-width: 26px;
+    min-height: 26px;
+  }
+
+  .voice-lang-btn { display: none; } /* hide lang toggle on very small screens */
 }
 
 /* Landscape orientation adjustments */

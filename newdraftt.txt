@@ -1,0 +1,358 @@
+
+Project Draft: Govt Scheme Q&A Web Application
+=============================================
+
+1) Project Summary
+- Name: govt-scheme-qna
+- Purpose: Provide an AI-powered Q&A platform for government scheme documents allowing admins to upload documents and citizens to ask questions (supports Marathi and English). The system uses RAG-style responses via LLMs and semantic search over document embeddings.
+
+2) High-level Features
+- Admin panel for uploading/managing scheme documents.
+- Citizen-facing chat interface (text/voice) for Q&A on schemes.
+- Document processing pipeline: PDF extraction, OCR (Tesseract), text preprocessing, chunking, embeddings, and semantic search.
+- AI integration: Google Gemini / OpenAI / Azure adapters for RAG.
+- Analytics: Simple usage analytics auto-updated hourly.
+
+3) Tech Stack
+- Frontend: React (create-react-app) with React Router, Recharts for charts.
+- Backend: Node.js + Express.js
+- Database: MongoDB (via Mongoose), with vector-search capabilities represented in code (embedding storage / DocumentChunk model).
+- Storage: Cloudinary (for uploaded files) and local uploads folder references.
+- AI/Embedding: Google Gemini, OpenAI, Azure SDKs (multiple service adapters present).
+- Other: PDF parsing (`pdf-parse`), OCR (`tesseract.js`), natural language utilities (`natural`).
+
+4) Key Scripts (from package.json)
+- Root: `npm run dev` (starts server + client concurrently), `npm run install-all` to install dependencies across root/client/server, `npm run build` builds client.
+- Client: `npm start` / `npm run build` (react-scripts)
+- Server: `npm start` (node server.js), `npm run dev` (nodemon server.js)
+
+5) Primary Files and Directories (quick guide)
+- [client/](client): React app. Key files: `src/index.js`, `src/App.js`, components under `components/`, API layer at `src/services/api.js`.
+- [server/](server): Express backend.
+  - `server.js` - main entrypoint (DB connect, Google API init, route registration, health checks, analytics timer).
+  - `config/` - `database.js` (DB connection), `googleApis.js` (Google API initialization).
+  - `routes/` - API routes: `auth`, `scheme`, `chat`, `upload`, `simpleAnalytics`.
+  - `controllers/` - route handlers: `auth.js`, `chat.js`, `scheme.js`, `upload.js`, `simpleAnalytics.js`.
+  - `services/` - business logic and integrations (AI adapters, embedding services, Cloud Storage, PDF extraction, semantic search, translation, text preprocessing).
+  - `models/` - Mongoose schemas: `User`, `Scheme`, `DocumentChunk`, `AnalyticsSummary`, etc.
+  - `middleware/` - auth, upload handling, analytics middleware, validation.
+
+6) Environment & Configuration (required)
+- Copy `server/env.example` -> `server/.env` and populate:
+  - `MONGO_URI` or similar DB connection string
+  - API keys for Google Gemini / OpenAI / Azure (depending on which integration is used)
+  - `JWT_SECRET` for authentication
+  - `CLOUDINARY_URL` or relevant cloud storage credentials
+  - `CORS_ORIGIN` to allow frontend origin in dev/prod
+- Confirm any additional env vars referenced in `config/googleApis.js`, `services/*`, and `server/.env`.
+
+7) How to Run Locally (recommended steps)
+1. Install deps for root, client, server:
+
+   npm run install-all
+
+2. Configure environment:
+
+   copy server/env.example to server/.env and set values (Mongo URI, API keys, JWT secret)
+
+3. (Optional) Seed admin user:
+
+   node server/seed.js
+
+4. Start dev servers:
+
+   npm run dev
+
+   - This runs the server (port 5000 default) and the React client (port 3000). Client proxies API requests to `http://localhost:5000` per `client/package.json` proxy setting.
+
+5. Health checks to confirm services:
+
+   - GET /api/health
+   - GET /api/health/database
+
+8) Verification & QA Checklist (manual + automated)
+- Automated checks:
+  - `npm audit` in `server` and `client` to detect vulnerable deps.
+  - Run `npm test` in client (if tests added) and implement tests if missing.
+  - Run ESLint / Prettier if configured (add if missing).
+- Manual runtime checks:
+  - Confirm DB connection via `/api/health/database`.
+  - Upload a sample PDF via the admin upload endpoint and verify processing pipeline: pdf extraction, OCR if needed, chunking, embeddings stored, and chat returns relevant answers.
+  - Verify authentication flows: registration/login (admin), JWT issuance, protected routes.
+  - Verify file upload sanitization and file size limits in `multer`/Cloudinary integration.
+  - Verify CORS and origin restrictions.
+  - Validate rate-limiting and abuse protections (if absent, add recommendations below).
+
+9) Security Review Checklist (prioritized)
+- Ensure `.env` values and API keys are not committed. `server/.env` should be listed in `.gitignore`.
+- Validate input on upload endpoints: enforce file type checking, size limits, virus scanning if possible.
+- Review authentication and authorization: ensure admin-only endpoints check roles.
+- Check JWT secret length/rotation and token expiry.
+- Review dependencies for high-severity vulnerabilities and update pinned deps.
+
+10) Files & Components That Need In-Depth Review (recommended order)
+1. `server/services/aiService.js` and `server/services/semanticSearchService.js` - ensure proper prompt handling, retry/backoff, and no prompt injection risks.
+2. `server/services/embeddingService.js` & `azureEmbeddingService.js` - verify embedding storage format and dimensionality assumptions.
+3. `server/controllers/upload.js` and `middleware/upload.js` - security around uploads.
+4. `server/routes/chat.js` and `controllers/chat.js` - confirm streaming or sync LLM calls, timeout handling, and cost controls.
+5. `models/DocumentChunk.js` - check chunk metadata, fields used for retrieval.
+6. `server/config/googleApis.js` - validate credential handling and initialization flow (already invoked at startup).
+
+11) Deployment Notes
+- `vercel.json` and `render.yaml` exist — project likely deploys frontend to Vercel and backend to Render/other PaaS. Decide on one deployment model or containerize both.
+- Build steps:
+  - Build client: `cd client && npm run build`
+  - Serve static client (if hosting together) or host client separately (Vercel) and point API env to deployed backend.
+- For the backend, use a process manager (PM2) or Docker and set up environment securely via the platform's secrets manager.
+
+12) Known Assumptions & Gaps
+- No automated tests appear to be present for server routes — add unit/integration tests for core APIs.
+- No centralized lint/format config at repo root — consider adding ESLint and a consistent Prettier config.
+- Rate-limiting or request quotas for AI endpoints not obvious — important to prevent runaway costs and abuse.
+
+13) Recommended Immediate Next Steps (actionable)
+1. Run `npm run install-all` and start dev servers locally to validate the app boots.
+2. Seed an admin user and test upload -> processing -> chat Q&A flow with a small sample PDF.
+3. Run dependency audit and upgrade vulnerable packages.
+4. Add missing automated tests for `chat` and `upload` flows.
+5. Harden upload validation and add rate-limiting on chat endpoints (e.g., `express-rate-limit`).
+
+14) Suggested Long-term Improvements
+- Add CI pipeline (GitHub Actions) for lint, test, and dependency audit before merge.
+- Add integration tests that run against a test MongoDB instance (e.g., MongoMemoryServer) to validate ingestion and retrieval.
+- Add observability: request/response logging, Sentry/LogRocket for frontend errors, metrics for AI quota usage.
+
+15) Contacts & Maintainers
+- `author` in package.json: Your Name — update to actual maintainer/contact info.
+
+--- End of Draft ---
+
+================================================================================
+GRAMSEVAK WORKSPACE — PROJECT SUMMARY & TECHNICAL DRAFT
+Generated for documentation / submission use. Scope: repository contents reviewed.
+================================================================================
+
+1. WORKSPACE LAYOUT (d:\Gramsevak)
+--------------------------------------------------------------------------------
+• govt-scheme-qna/     — Full-stack “Government Scheme Q&A” web application (primary codebase).
+• Two standalone PDF files at workspace root (appear unrelated to app source; likely reference material).
+
+
+2. PRODUCT PURPOSE
+--------------------------------------------------------------------------------
+A bilingual (English / Marathi-oriented) citizen-facing assistant plus an admin console for
+government scheme metadata and PDF documents. Citizens browse schemes, open scheme detail pages,
+and chat with an AI that answers from retrieved document text (RAG). Admins authenticate,
+create/update/delete schemes, upload PDFs to cloud storage, and view lightweight analytics.
+
+
+3. TECHNOLOGY STACK
+--------------------------------------------------------------------------------
+Frontend (client/)
+  • React 18, React Router 6, Axios, react-hot-toast, Framer Motion, Recharts (admin charts),
+    Headless UI / Heroicons.
+  • Development proxy: package.json sets proxy to http://localhost:5000 for same-origin API calls
+    during CRA dev (production uses REACT_APP_API_URL).
+
+Backend (server/)
+  • Node.js, Express 4, Mongoose 7 (MongoDB).
+  • Auth: JWT (Bearer), bcrypt password hashing.
+  • File uploads: Multer with memory storage; PDFs stored on Cloudinary (raw uploads).
+  • PDF/text: pdf-parse, mammoth (DOCX mentioned in legacy extraction paths), optional OCR-related
+    deps in package.json for robust extraction services.
+
+AI / NLP pipeline
+  • Google Gemini (@google/generative-ai): chat model gemini-2.5-flash for answer generation;
+    embedding models text-embedding-004 or embedding-001 as fallback.
+  • Azure OpenAI (via @azure/openai): preferred path for embeddings (see azureEmbeddingService.js).
+  • Hybrid embedding strategy in aiService.js: try Azure first → Gemini embeddings → last-resort
+    simulated random vectors (development fallback only; poor retrieval quality).
+  • Azure Translator (REST): query translation to English for search; answer translation from English
+    to user language (e.g. Marathi).
+
+Infrastructure / ops
+  • Root vercel.json: static build for client only (Heroku-style postbuild noted in root package.json).
+  • Server timeouts extended to 120s for AI workloads.
+
+
+4. ARCHITECTURE OVERVIEW
+--------------------------------------------------------------------------------
+┌─────────────────┐     HTTPS/JSON      ┌──────────────────┐     ┌─────────────┐
+│  React SPA      │ ◄──────────────────►│  Express API     │ ◄►│  MongoDB    │
+│  (citizen/admin)│   JWT on admin      │  /api/*          │   │  schemes,   │
+└─────────────────┘                     └────────┬─────────┘   │  users,     │
+                                                 │             │  chunks,    │
+                                                 ▼             │  analytics  │
+                                        ┌──────────────────┐   └─────────────┘
+                                        │ External APIs    │
+                                        │ Gemini, Azure    │
+                                        │ Translator,      │
+                                        │ Cloudinary       │
+                                        └──────────────────┘
+
+Request flow (scheme-specific Q&A):
+  User message (+ optional schemeId, language)
+    → ChatController loads Scheme metadata
+    → SemanticSearchService: translate query to English → embed query → cosine similarity vs
+       DocumentChunk.embedding for that scheme (filters: processingStatus completed,
+       metadata.qualityScore ≥ 0.5)
+    → Top chunks merged with scheme title/description as context
+    → AIService: Gemini generates English answer → refined (markdown stripped, length limits) →
+       translated to UI language if not English
+    → JSON response with answer, confidence, PDF chunk sources.
+
+
+5. DATABASE MODELS (server/models/)
+--------------------------------------------------------------------------------
+User
+  • email (unique), bcrypt-hashed password, name, role enum admin | super_admin, department,
+    isActive, lastLogin, password reset fields.
+
+Scheme
+  • title, description, category (fixed enum: Education, Healthcare, …, Other),
+    pdfFile { url, publicId, filename, path }, isActive, createdBy/updatedBy/deletedAt/deletedBy,
+    timestamps. Text indexes on title/description; soft-delete hooks cascade DocumentChunk deletion
+    when deactivating.
+
+DocumentChunk
+  • schemeId, chunkId, content, embedding [Number], metadata (page, section, chunkIndex, language,
+    contentType, keywords, qualityScore, …), processingStatus, usageStats (retrieval counts).
+  • Powers semantic search; embeddings must match query vector dimensions (service logs warn on
+    768 vs 1536 mismatch).
+
+AnalyticsSummary
+  • Four document types: page_view, unique_session, search_query, chat_interaction — counts and
+    previousCount for trend % on admin dashboard. Hourly job in server.js copies current counts to
+    previousCount for trend baseline.
+
+
+6. API SURFACE (Express routes)
+--------------------------------------------------------------------------------
+Mounted in server.js:
+  • /api/auth       — login, register (super_admin only), profile, password change, forgot/reset
+    patterns, user CRUD for super admin (see routes/auth.js for exact endpoints).
+  • /api/schemes    — public list/detail; admin CRUD with multipart pdfFile; processing-status,
+    reprocess-pdf, chunks, download-pdf.
+  • /api/chat       — POST /ask (public; optional JWT); popular questions; POST search/all-schemes;
+    search/suggestions; history/search endpoints return stubs (chat persistence disabled for public).
+  • /api/upload     — POST /documents (admin, multipart field “document”), status, list/delete stubs.
+  • /api/analytics  — overview, summary, reset (simple analytics).
+  • GET /api/health, /api/health/database.
+
+Note: README.md lists POST /api/upload/document — actual route file uses POST /api/upload/documents.
+Align docs or clients accordingly.
+
+
+7. DOCUMENT & EMBEDDING PIPELINE (critical paths)
+--------------------------------------------------------------------------------
+A) Primary path (recommended — used when creating/updating a scheme with PDF):
+   • Scheme controller uploads PDF buffer to Cloudinary (folder govt-schemes, raw PDF).
+   • Saves Scheme with pdfFile.url pointing to secure_url.
+   • Asynchronously calls embeddingService.processPDFForScheme(schemeId, cloudinaryUrl, options):
+        pdfExtractionService downloads/parses PDF → textPreprocessingService chunks text →
+        aiService.generateEmbeddings → DocumentChunk documents inserted in MongoDB.
+
+B) Secondary path (upload controller services/document.js processDocument):
+   • Extracts text and counts chunks but does NOT call embeddingService or write DocumentChunk rows
+     in the reviewed code path. Admin “extra document” upload may not populate vectors unless the
+     product workflow relies solely on scheme-level PDF processing.
+
+Operational implication: RAG quality depends on successful processPDFForScheme runs and valid API keys
+for embedding providers.
+
+
+8. FRONTEND ROUTING & FEATURES (client/src/)
+--------------------------------------------------------------------------------
+Public
+  • / — HomePage: lists schemes with CategoryFilter + SearchBox + SchemesGrid (also client-side
+        filtering/suggestions).
+  • /scheme/:schemeId — SchemeDetail.
+  • /chat and /chat/:schemeId — ChatInterface: messages, FAQ sidebar, LanguageToggle, ChatInput with
+        Web Speech API (speech-to-text in en/mr-IN), ChatMessages with optional text-to-speech.
+
+Admin (ProtectedRoute adminOnly)
+  • /admin/login, /admin/forgot-password
+  • /admin/dashboard, /admin/users, /admin/profile, /admin/analytics, /admin/ai-services
+  • Wildcard /admin/* falls back to AdminDashboard.
+
+Shared
+  • AuthContext: token/user in localStorage; api.js attaches Authorization and handles 401 redirect.
+  • AIServices.js + AIServiceCard: admin-facing status/monitoring style UI for AI stack.
+
+
+9. ANALYTICS & MIDDLEWARE
+--------------------------------------------------------------------------------
+• simpleAnalyticsMiddleware: tracks page views, scheme views, search queries, chat interactions into
+  AnalyticsSummary (incrementEvent).
+• analyticsMiddleware.js also exists for scheme routes (trackPageView, trackSchemeView) — dual
+  middleware layers present; verify no double-counting if both fire on same requests.
+
+
+10. SECURITY & CONFIGURATION
+--------------------------------------------------------------------------------
+• CORS: origin from CORS_ORIGIN or default http://localhost:3000.
+• JWT_SECRET, MONGODB_URI, GOOGLE_GEMINI_API_KEY, Azure keys for embeddings/translator, Cloudinary
+  trio — all expected in server environment (see client/.env.example for frontend vars).
+• Password rules: User model requires letter + digit; minimum length enforced server-side.
+
+
+11. LOCAL DEVELOPMENT
+--------------------------------------------------------------------------------
+Root package.json:
+  • npm run install-all — installs root + client + server deps.
+  • npm run dev — concurrently server (nodemon) and client (react-scripts).
+
+Seeding:
+  • node server/seed.js creates super_admin admin@govtscheme.com / admin123 if absent — change after
+    first login.
+
+
+12. DOCUMENTATION FILES IN REPO
+--------------------------------------------------------------------------------
+• README.md — quick start and route list (partially out of sync with upload path naming).
+• SUBMISSION_GUIDE.md, EXPERIMENTAL_EXECUTION_GUIDE.md, RESEARCH_PAPER_DRAFT.md — academic /
+  submission collateral under govt-scheme-qna/.
+
+
+13. KNOWN IMPLEMENTATION NOTES (accuracy / maintenance)
+--------------------------------------------------------------------------------
+• Semantic search loads candidate chunks with .find() then cosine similarity in Node — works but can
+  be heavy at scale; MongoDB “Vector Search” is mentioned in README but implementation is
+  application-side similarity over stored arrays.
+• Chat history endpoints exist as stubs — product is stateless for anonymous citizens.
+• Upload controller references scheme.processingStatus while Scheme schema file reviewed did not
+  define that field — confirm runtime Mongoose strict mode behavior or add field to schema if status
+  tracking is required.
+• README “voice” feature: implemented via browser SpeechRecognition + speechSynthesis, not a
+  third-party voice API.
+
+
+14. FILE INVENTORY — SERVER (representative)
+--------------------------------------------------------------------------------
+server.js — app bootstrap, routes, health, hourly analytics tick.
+config/database.js, config/googleApis.js
+controllers/auth.js, scheme.js, chat.js, upload.js, simpleAnalytics.js
+middleware/auth.js, validation.js, upload.js, analyticsMiddleware.js, simpleAnalyticsMiddleware.js
+models/User.js, Scheme.js, DocumentChunk.js, AnalyticsSummary.js, models/index.js
+routes/auth.js, scheme.js, chat.js, upload.js, simpleAnalytics.js
+services/aiService.js, azureEmbeddingService.js, semanticSearchService.js, embeddingService.js,
+  translationService.js, pdfExtractionService.js, textPreprocessingService.js, document.js,
+  cloudStorage.js
+utils/database.js, fileCleanup.js
+seed.js
+
+
+15. FILE INVENTORY — CLIENT (representative)
+--------------------------------------------------------------------------------
+src/index.js, App.js, App.css
+context/AuthContext.js
+services/api.js
+pages/HomePage.js, citizen/ChatInterface.js, SchemeDetail.js, auth/*, admin/*
+components/chat/* (ChatHeader, ChatMessages, ChatInput, FAQSidebar), common/*, admin/AIServiceCard.js,
+  analytics/* (ChartsSection, StatsCard, ErrorBoundary)
+utils/helpers.js, textPreservation.js
+
+
+================================================================================
+END OF DRAFT
+================================================================================

@@ -14,7 +14,6 @@ const ChatInterface = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
@@ -331,9 +330,12 @@ All information comes from official government sources and is regularly updated 
   };
 
   const scrollToBottom = () => {
-    // Use a small delay to ensure DOM is updated
+    // Scroll the container directly to avoid scrolling the whole page
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const container = messagesContainerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
     }, 100);
   };
 
@@ -362,7 +364,6 @@ All information comes from official government sources and is regularly updated 
                 onScroll={handleScroll}
                 messagesContainerRef={messagesContainerRef}
               />
-              <div ref={messagesEndRef} />
 
               {/* Input Area */}
               <ChatInput 

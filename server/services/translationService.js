@@ -301,7 +301,9 @@ class TranslationService {
   }
 
   /**
-   * Translate AI response to user's preferred language
+   * Translate AI response to user's preferred language.
+   * Paragraphs are translated separately and rejoined so that
+   * Azure Translator does not collapse \n\n breaks into a single block.
    * @param {string} response - AI response in English
    * @param {string} targetLang - Target language for response
    * @returns {Promise<string>} Translated response
@@ -318,7 +320,21 @@ class TranslationService {
       }
 
       console.log(`💬 Translating response to ${targetLang}`);
-      return await this.translateText(response, 'en', targetLang);
+
+      // Split on paragraph breaks so each paragraph is translated independently.
+      // This preserves the \n\n structure that Azure Translator would otherwise strip.
+      const paragraphs = response.split(/\n\n+/);
+
+      if (paragraphs.length <= 1) {
+        // Single paragraph — translate directly
+        return await this.translateText(response, 'en', targetLang);
+      }
+
+      // Translate all paragraphs in one batch request (efficient + structure-safe)
+      const translated = await this.translateBatch(paragraphs, 'en', targetLang);
+
+      // Rejoin with double newline to restore paragraph breaks
+      return translated.join('\n\n');
 
     } catch (error) {
       console.error('❌ Response translation failed:', error.message);

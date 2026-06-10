@@ -98,6 +98,11 @@ const LanguageToggle = () => {
           translateSelect.value = targetLanguage;
           translateSelect.dispatchEvent(new Event('change', { bubbles: true }));
           
+          // Persist language so ChatInput voice sync can read it reliably
+          localStorage.setItem('siteLanguage', targetLanguage);
+          // Fire a custom event for same-page listeners (storage event only fires in other tabs)
+          window.dispatchEvent(new CustomEvent('siteLanguageChanged', { detail: targetLanguage }));
+          
           // Update our state
           setCurrentLanguage(targetLanguage);
           

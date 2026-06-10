@@ -232,84 +232,115 @@ class AIService {
 
   // Generate fallback response when AI service is unavailable
   generateFallbackResponse(question, relevantContext, language, isGoogleServerError = false) {
-    const languageText = language === 'mr' ? 'मराठी' : 'English';
-    const serverErrorNote = isGoogleServerError ? 
-      '\n\n⚠️ Note: This simplified response is due to temporary issues with Google Gemini servers (503 Service Unavailable). Our system is working fine - the issue is from Google\'s side. Please try again in a few minutes.' : 
-      '';
-    
+    const serverErrorNote = isGoogleServerError
+      ? ' I am having a bit of trouble connecting right now due to a temporary issue on the server side. Please try again in a few minutes and it should work fine!'
+      : '';
+
     if (relevantContext && relevantContext.length > 0) {
-      // Use the most relevant context as a simple answer
-      const bestContext = relevantContext.reduce((best, current) => 
+      const bestContext = relevantContext.reduce((best, current) =>
         (current.score || 0) > (best.score || 0) ? current : best
       );
-      
-      return `Based on the available information about government schemes, here's what I found:\n\n${bestContext.text.substring(0, 500)}...\n\nNote: This is a simplified response. For more detailed information, please contact the relevant government office directly.${serverErrorNote}`;
+      const snippet = bestContext.text.substring(0, 400).trim();
+      return `Sure! Here is what I found for you based on the scheme information:\n\n${snippet}\n\nIf you need more details, your local government office or the scheme helpline will be happy to help you further.${serverErrorNote}`;
     } else {
-      const baseMessage = `I apologize, but I'm currently unable to process your question about government schemes. Please try again later or contact the relevant government office directly for assistance.`;
-      return baseMessage + serverErrorNote;
+      return `Hmm, I could not find specific information about that right now. It is best to check directly with your local government office or the official helpline for this scheme — they will guide you properly.${serverErrorNote}`;
     }
   }
 
-  // Refine response to improve formatting and focus
+  // Clean the AI response — preserve **bold**, strip all other markdown noise
   refineResponse(response, question, language) {
     try {
       let refined = response;
 
-      // First, identify and preserve important content for highlighting
-      const importantKeywords = [
-        'benefit', 'eligibility', 'required', 'document', 'fee', 'cost', 'deadline',
-        'amount', 'percentage', 'age', 'income', 'criteria', 'process', 'step',
-        'contact', 'helpline', 'website', 'office', 'address', 'phone', 'email'
-      ];
+      // Remove headings (#, ##, ###)
+      refined = refined.replace(/#{1,6}\s*/g, '');
 
-      // Add highlighting to important details while preserving structure
-      importantKeywords.forEach(keyword => {
-        const regex = new RegExp(`\\b(${keyword}s?)\\b`, 'gi');
-        refined = refined.replace(regex, '**$1**');
-      });
+      // Remove fenced code blocks and inline backticks
+      refined = refined.replace(/```[\s\S]*?```/g, '').replace(/`/g, '');
 
-      // Clean up markdown formatting issues while preserving important formatting
-      refined = refined
-        .replace(/\*\*\*\*/g, '**') // Convert quadruple asterisks to double
-        .replace(/###/g, '') // Remove triple hashes
-        .replace(/##/g, '') // Remove double hashes
-        .replace(/#/g, '') // Remove single hashes
-        .replace(/```/g, '') // Remove code blocks
-        .replace(/`/g, ''); // Remove backticks
+      // Remove strikethrough but keep text
+      refined = refined.replace(/~~(.*?)~~/g, '$1');
 
-      // Improve bullet point formatting with proper indentation
-      refined = refined
-        .replace(/^[\s]*[-•]\s*/gm, '\n- ') // Ensure proper bullet point formatting with line breaks
-        .replace(/\n\s*[-•]\s*/g, '\n- '); // Standardize all bullet points
+      // Remove markdown links but keep label
+      refined = refined.replace(/\[(.*?)\]\(.*?\)/g, '$1');
 
-      // Clean up extra whitespace while preserving structure
-      refined = refined
-        .replace(/\n\s*\n\s*\n/g, '\n\n') // Replace multiple newlines with double newlines
-        .replace(/^\s+|\s+$/g, '') // Trim whitespace
-        .replace(/[ \t]+/g, ' ') // Replace multiple spaces/tabs with single space
-        .replace(/\n\s+/g, '\n'); // Remove leading spaces from lines
+      // Convert "- bullet" lines → plain text on its own line (keep the text, remove dash)
+      refined = refined.replace(/^[ \t]*[-•]\s+/gm, '');
 
-      // Ensure proper spacing around bullet points
-      refined = refined
-        .replace(/\n-\s*/g, '\n- ') // Ensure consistent spacing after bullets
-        .replace(/\n\n-\s*/g, '\n\n- '); // Ensure proper spacing before bullet lists
+      // Collapse triple+ asterisks → double (keep bold)
+      refined = refined.replace(/\*{3,}(.*?)\*{3,}/g, '**$1**');
 
-      // Limit response length based on question type
+      // Remove lone single asterisks not part of **bold**
+      refined = refined.replace(/(?<!\*)\*(?!\*)/g, '');
+
+      // Normalise line endings: \r\n → \n
+      refined = refined.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+      // Collapse 3+ newlines → exactly two (one blank line = paragraph break)
+      refined = refined.replace(/\n{3,}/g, '\n\n');
+
+      // Collapse multiple spaces/tabs on a single line
+      refined = refined.replace(/[ \t]+/g, ' ');
+
+      // Remove leading spaces at start of each line
+      refined = refined.replace(/\n /g, '\n');
+
+      refined = refined.trim();
+
+      // ── Paragraph splitting ─────────────────────────────────────────
+      // Gemini sometimes puts paragraph breaks as single \n instead of \n\n.
+      // Treat any line that ends a sentence (. ! ?) followed by a \n
+      // and then a capital letter as a paragraph boundary.
+      refined = refined.replace(/([.!?])\n(?=[A-Z\u0900-\u097F])/g, '$1\n\n');
+
+      // If still no paragraph breaks and text is long, split at sentence boundaries
+      const hasParagraphBreaks = /\n\n/.test(refined);
+      if (!hasParagraphBreaks && refined.length > 280) {
+        // Match sentences ending with . ! ? (handles English + avoids splitting decimals)
+        const sentences = refined.match(/[^.!?]+(?:[.!?]+(?!\s*[a-z])[^.!?]*)?[.!?]+/g)
+          || refined.match(/[^.!?]+[.!?]+/g)
+          || [];
+
+        if (sentences.length >= 5) {
+          const third = Math.ceil(sentences.length / 3);
+          refined = [
+            sentences.slice(0, third).join(' ').trim(),
+            sentences.slice(third, third * 2).join(' ').trim(),
+            sentences.slice(third * 2).join(' ').trim()
+          ].filter(Boolean).join('\n\n');
+        } else if (sentences.length >= 3) {
+          const half = Math.ceil(sentences.length / 2);
+          refined = [
+            sentences.slice(0, half).join(' ').trim(),
+            sentences.slice(half).join(' ').trim()
+          ].filter(Boolean).join('\n\n');
+        }
+      }
+
+      // ── Length truncation (must happen AFTER paragraph splitting) ───
+      // Truncate by paragraph so we never cut mid-sentence and never
+      // destroy the \n\n structure by joining with spaces.
       const questionType = this.analyzeQuestionType(question);
       const maxLength = this.getMaxResponseLength(questionType);
-      
+
       if (refined.length > maxLength) {
-        // Truncate at sentence boundary, preserving bullet points
-        const sentences = refined.split(/[.!?]+/);
+        const paras = refined.split('\n\n');
         let truncated = '';
-        for (const sentence of sentences) {
-          if ((truncated + sentence).length <= maxLength) {
-            truncated += sentence + '.';
+        for (const para of paras) {
+          if ((truncated ? truncated + '\n\n' : '') .length + para.length <= maxLength) {
+            truncated = truncated ? truncated + '\n\n' + para : para;
           } else {
+            // Try to fit at least part of this paragraph sentence-by-sentence
+            const sentences = para.match(/[^.!?]+[.!?]+/g) || [];
+            for (const s of sentences) {
+              if ((truncated + ' ' + s).length <= maxLength) {
+                truncated = truncated ? truncated + ' ' + s.trim() : s.trim();
+              } else break;
+            }
             break;
           }
         }
-        refined = truncated || refined.substring(0, maxLength) + '...';
+        refined = (truncated || refined.substring(0, maxLength)).trim();
       }
 
       return refined;
@@ -322,58 +353,46 @@ class AIService {
   // Get maximum response length based on question type
   getMaxResponseLength(questionType) {
     const limits = {
-      benefits: 800,
-      eligibility: 600,
-      application: 1000,
-      documents: 500,
-      fees: 300,
-      contact: 400,
-      timeline: 400,
-      general: 1200
+      benefits:     900,
+      eligibility:  800,
+      application:  1100,
+      documents:    700,
+      fees:         500,
+      contact:      600,
+      timeline:     600,
+      general:      1300
     };
-    
-    return limits[questionType] || 1000;
+    return limits[questionType] || 1100;
   }
 
-  // Build comprehensive prompt for AI
+  // Build conversational, human-like prompt for AI
   buildPrompt(question, context, language) {
-    const languageInstruction = language === 'mr' ? 
-      'Please respond in Marathi language.' : 
-      'Please respond in English language.';
+    const languageInstruction = language === 'mr' ?
+      'Respond entirely in Marathi language, in a warm conversational tone.' :
+      'Respond in clear, friendly English.';
 
-    // Analyze question type to tailor response
     const questionType = this.analyzeQuestionType(question);
     const responseGuidelines = this.getResponseGuidelines(questionType, language);
 
-    return `
-You are a helpful government scheme assistant for Indian citizens. Your role is to provide accurate, helpful, and easy-to-understand information about government schemes and programs.
+    return `You are a friendly and knowledgeable local government scheme helper — like a helpful friend at the gram panchayat office who genuinely wants citizens to get their benefits.
 
-Context Information:
+Context from official scheme documents:
 ${context.map((ctx, index) => `[Source ${index + 1}]: ${ctx.text}`).join('\n\n')}
 
-User Question: ${question}
-Question Type: ${questionType}
+Citizen's question: ${question}
 
-Instructions:
+How to respond:
 1. ${languageInstruction}
-2. Provide accurate information based only on the context provided
-3. If the answer is not in the context, clearly state that you don't have that specific information
-4. Be helpful and explain things in simple terms
-5. ${responseGuidelines}
-6. Format your response with proper structure:
-   - Use bullet points with dashes (-) for lists
-   - Each bullet point should be on a new line with proper indentation
-   - Use line breaks to separate different sections
-   - Highlight important details like amounts, deadlines, requirements
-7. Structure your response as follows:
-   - Start with a brief introduction if needed
-   - Use bullet points for main information
-   - End with any additional important details
-8. Keep responses concise and focused on what the user specifically asked
-9. If the question is about a specific aspect (like benefits, eligibility, etc.), focus only on that aspect
-10. Make sure bullet points are properly formatted with line breaks and indentation
+2. Write like a warm, helpful human being — NOT like a government document or AI report.
+3. Always split your response into 2 to 3 short paragraphs separated by a blank line. Each paragraph should cover one idea (e.g. first paragraph: what the scheme is or the direct answer; second paragraph: eligibility or key details; third paragraph: how to apply or a closing note). Never write everything as one long single paragraph. Write in full sentences — do NOT use bullet dashes (-) or numbered lists.
+4. Use **double asterisks** ONLY around genuinely important pieces of information — such as specific amounts (like **₹50,000**), key dates or deadlines, scheme names, important eligibility numbers (like **18 to 55 years**), or critical action words (like **apply online**). Do NOT bold every other word — use it sparingly so it stands out.
+5. Do NOT use #, ##, ###, backticks, or any other markdown symbols — only **bold** where truly needed.
+6. ${responseGuidelines}
+7. Only use information from the context provided. If something is not mentioned, say so honestly and warmly.
+8. Keep the answer focused and helpful — no unnecessary padding.
+9. End with a short, warm sentence inviting further questions.
 
-Please provide a helpful and well-formatted answer:`;
+Write your response now:`;
   }
 
   // Analyze the type of question being asked
@@ -401,17 +420,17 @@ Please provide a helpful and well-formatted answer:`;
     }
   }
 
-  // Get response guidelines based on question type
+  // Get response guidelines based on question type — all conversational
   getResponseGuidelines(questionType, language) {
     const guidelines = {
-      benefits: 'Focus specifically on the benefits, advantages, and what users will receive from the scheme. List them clearly and concisely.',
-      eligibility: 'Focus on who can apply, age requirements, income criteria, and other eligibility conditions. Be specific about requirements.',
-      application: 'Focus on the step-by-step application process, where to apply, and how to apply. Include any online/offline options.',
-      documents: 'Focus on the specific documents required for application. List them clearly and mention any format requirements.',
-      fees: 'Focus on application fees, processing charges, and any other costs involved. Mention if the scheme is free.',
-      contact: 'Focus on contact information, helpline numbers, office addresses, and where to get help.',
-      timeline: 'Focus on important dates, deadlines, processing time, and duration of the scheme.',
-      general: 'Provide a comprehensive overview of the scheme, including its purpose, key features, and main benefits.'
+      benefits: 'Tell the person warmly what they will get from this scheme — like you are genuinely excited to share good news with them. Describe the benefits in plain sentences.',
+      eligibility: 'Explain in a friendly way who can apply and what the conditions are. If there are multiple criteria, describe them naturally in sentences rather than a list.',
+      application: 'Walk the person through how to apply as if you are guiding a friend step by step. Keep the language simple and encouraging.',
+      documents: 'Tell them what documents they will need in a natural, helpful way — like reminding a friend what to bring before they head to the office.',
+      fees: 'Let them know clearly and reassuringly about any fees or whether it is free. Be direct and friendly.',
+      contact: 'Share the contact details in a warm way, and encourage them to reach out if they need more help.',
+      timeline: 'Explain dates and timelines in plain, clear language — help them understand what to expect and when.',
+      general: 'Give a friendly, easy-to-understand overview of the scheme — explain what it is, who it helps, and why it matters in simple words.'
     };
 
     return guidelines[questionType] || guidelines.general;
